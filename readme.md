@@ -28,6 +28,10 @@ The example Lambda function is defined in `src/index.js`. You can modify this fi
 
 `npm run build`
 
+**If you environment is windows run command**
+
+`npm run build-windows`
+
 # Note on the Lambda Function File
 
 The `src/index.js` file contains the core logic of the Lambda function you're simulating locally. When you're ready to deploy to AWS Lambda, this is the file you should copy to AWS. The reason for this is that `src/index.js` encapsulates the event handler that AWS Lambda invokes in response to triggers, making it the essential component of your Lambda function.

@@ -1,5 +1,5 @@
 import "dotenv/config";
-import Order from "./model.js";
+import Order from "./db/model.js";
 
 export const handler = async (event) => {
   try {
