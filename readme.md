@@ -1,5 +1,7 @@
 ## Setup and Installation
 
+0. **To generate ZIP**: zip -r lambda.zip node_modules package.json package-lock.json readme.md && (cd src && zip -r ../lambda.zip \*)
+
 1. **Clone the repository**: Clone this repository to your local machine using `git clone <repository-url>`.
 
 2. **Install dependencies**: Navigate to the project root directory and run `npm install` to install the required dependencies.
@@ -31,4 +33,5 @@ The `lambda.js` file contains the core logic of the Lambda function you're simul
 ## Contributing
 
 Contributions to improve the local testing setup or the example Lambda function are welcome. Please follow the standard GitHub pull request process to submit your changes.
+
 # run-local-lambda-nodejs

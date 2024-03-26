@@ -1,6 +1,7 @@
-const express = require("express");
-const fs = require("fs");
-const { handler } = require("./lambda");
+import express from "express";
+import { promises as fs } from "fs";
+import { handler } from "./src/index.js";
+
 const app = express();
 const PORT = 3000;
 
@@ -16,25 +17,23 @@ app.get("/invoke", (req, res) => {
 });
 
 app.get("/invoke/:eventName", (req, res) => {
-  const eventName = req.params.eventName;
+  const { eventName } = req.params;
   const filePath = `./events/${eventName}.json`;
 
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) {
-      console.error(`Error reading the event file: ${err.message}`);
-      return res.status(500).send("Event not found or error reading the file");
-    }
-
-    const event = JSON.parse(data);
-    handler(event)
-      .then((response) => {
-        res.json(JSON.parse(response.body));
-      })
-      .catch((err) => {
-        console.error("Error executing Lambda with event:", err);
-        res.status(500).send("Error processing the event from the file");
-      });
-  });
+  fs.readFile(filePath, "utf8")
+    .then((data) => {
+      const event = JSON.parse(data);
+      return handler(event);
+    })
+    .then((response) => {
+      res.json(JSON.parse(response.body));
+    })
+    .catch((err) => {
+      console.error(
+        `Error reading the event file or executing Lambda with event: ${err.message}`
+      );
+      res.status(500).send("Event not found or error processing the event");
+    });
 });
 
 app.listen(PORT, () => {
