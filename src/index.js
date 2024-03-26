@@ -1,9 +1,16 @@
 import "dotenv/config";
+import { Op } from "sequelize";
 import Order from "./db/model.js";
 
 export const handler = async (event) => {
   try {
-    const results = await Order.findAll({});
+    const results = await Order.findAll({
+      where: {
+        idStatus: {
+          [Op.notIn]: [8, 9, 11],
+        },
+      },
+    });
 
     return {
       statusCode: 200,
