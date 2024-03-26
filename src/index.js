@@ -1,5 +1,4 @@
 import "dotenv/config";
-console.log("aca pasa", process.env.DB_USER, process.env.DB_PASSWORD);
 import db from "./db.js";
 
 export const handler = async (event) => {
