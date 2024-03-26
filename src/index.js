@@ -1,17 +1,12 @@
 import "dotenv/config";
-import db from "./db.js";
 
 export const handler = async (event) => {
   try {
-    const [results, metadata] = await db.query("SELECT * FROM `order`;", {
-      type: db.QueryTypes.SELECT,
-    });
-
     return {
       statusCode: 200,
       body: JSON.stringify({
         message: "success from lambda",
-        data: results,
+        data: "data",
       }),
     };
   } catch (error) {
