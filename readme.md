@@ -1,10 +1,10 @@
 ## Setup and Installation
 
-0. **To generate ZIP**:
+0. **To generate ZIP**: this command generate zip file to upload aws lambda in bin folder.
 
 ```bash
 
-mkdir -p bin && zip -r bin/lambda.zip node_modules package.json package-lock.json readme.md && (cd src && zip -r ../bin/lambda.zip *)
+npm run build
 
 ```
 
