@@ -1,21 +1,40 @@
 import "dotenv/config";
-import { Op } from "sequelize";
-import Order from "./db/model.js";
+import { Order, OrderStatusLog } from "./db/index.js";
+import { Op, Sequelize } from "sequelize";
 
 export const handler = async (event) => {
   try {
     const results = await Order.findAll({
       where: {
-        idStatus: {
-          [Op.notIn]: [8, 9, 11],
+        carrierTrackingCode: {
+          [Op.ne]: "",
+          [Op.not]: null,
         },
+        [Op.or]: [
+          { idStatus: { [Op.in]: [3, 4, 6, 7] } },
+          {
+            idOrder: {
+              [Op.in]: OrderStatusLog.findAll({
+                attributes: ["idOrder"],
+                where: {
+                  idStatus: [8, 10],
+                  createdAt: {
+                    [Op.gt]: Sequelize.literal(
+                      "DATE_SUB(NOW(), INTERVAL 2 DAY)"
+                    ),
+                  },
+                },
+              }),
+            },
+          },
+        ],
       },
     });
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "success from lambda",
+        message: "Success from lambda",
         data: results,
       }),
     };

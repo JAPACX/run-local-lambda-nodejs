@@ -1,6 +1,6 @@
 import { Model, DataTypes } from "sequelize";
-import db from "./config.js";
-class Order extends Model {}
+import db from "../config.js";
+export default class Order extends Model {}
 
 Order.init(
   {
@@ -149,8 +149,6 @@ Order.init(
     sequelize: db,
     modelName: "Order",
     tableName: "order",
-    timestamps: false, // Configura esto según si estás utilizando o no campos `createdAt` y `updatedAt`.
+    timestamps: false,
   }
 );
-
-export default Order;
