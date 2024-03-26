@@ -1,11 +1,9 @@
 import "dotenv/config";
-import db from "./db.js";
+import Order from "./model.js";
 
 export const handler = async (event) => {
   try {
-    const [results, metadata] = await db.query("SELECT * FROM `order`;", {
-      type: db.QueryTypes.SELECT,
-    });
+    const results = await Order.findAll({});
 
     return {
       statusCode: 200,
@@ -15,7 +13,7 @@ export const handler = async (event) => {
       }),
     };
   } catch (error) {
-    console.error("Error executing query:", error);
+    console.error("Error:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({
