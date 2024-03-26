@@ -1,5 +1,6 @@
 import "dotenv/config";
-import { Order, OrderStatusLog } from "./db/index.js";
+import Order from "./db/models/Order.js";
+import OrderStatusLog from "./db/models/OrderStatusLog.js";
 import { Op, Sequelize } from "sequelize";
 
 export const handler = async (event) => {
