@@ -1,6 +1,12 @@
 ## Setup and Installation
 
-0. **To generate ZIP**: zip -r lambda.zip node_modules package.json package-lock.json readme.md && (cd src && zip -r ../lambda.zip \*)
+0. **To generate ZIP**:
+
+```bash
+
+mkdir -p bin && zip -r bin/lambda.zip node_modules package.json package-lock.json readme.md && (cd src && zip -r ../bin/lambda.zip *)
+
+```
 
 1. **Clone the repository**: Clone this repository to your local machine using `git clone <repository-url>`.
 
