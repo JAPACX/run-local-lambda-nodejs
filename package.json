@@ -14,13 +14,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.540.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "mysql2": "^3.9.2",
     "sequelize": "^6.37.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
-    "archiver": "^7.0.1"
+    "archiver": "^7.0.1",
+    "nodemon": "^3.1.0"
   }
 }
