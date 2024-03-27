@@ -31,7 +31,6 @@ export default {
           },
         ],
       },
-      limit: 10,
       raw: true,
     });
   },
