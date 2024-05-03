@@ -9,24 +9,6 @@ const updateCarrierDataInOrderShipmentUpdateHistory = async ({ idOrder, idCarrie
     }
 };
 
-const getOrdersWithIncidentsTCC = async () => {
-    try {
-        return await dao.getOrdersWithIncidentsTCC();
-    } catch (err) {
-        console.error(err);
-        throw err;
-    }
-};
-
-const getCarrierData = async ({ idOrder, idCarrierStatusUpdate }) => {
-    try {
-        return await dao.getCarrierData({ idOrder, idCarrierStatusUpdate });
-    } catch (err) {
-        console.error(err);
-        throw err;
-    }
-};
-
-export default {updateCarrierDataInOrderShipmentUpdateHistory, getOrdersWithIncidentsTCC, getCarrierData};
+export default {updateCarrierDataInOrderShipmentUpdateHistory};
 
 
