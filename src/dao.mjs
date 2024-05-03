@@ -1,27 +1,39 @@
 import db from "./database/config.mjs";
-import axios from "axios";
 
-const updateCarrierData = async ({idOrder, idCarrierStatusUpdate, newData}) => {
+const getOrdersData = async ({ ordersIds }) => {
     try {
         const query = `
-      UPDATE orderShipmentUpdateHistory
-      SET carrierData = '${JSON.stringify(newData)}'
-      WHERE idOrder = ${idOrder} AND idCarrierStatusUpdate = ${idCarrierStatusUpdate}
-      ORDER BY createdAt DESC
-      LIMIT 1;
+      SELECT
+        o.idOrder,
+        c.fullName,
+        o.idCarrier,
+        o.carrierTrackingCode,
+        JSON_EXTRACT(o.carrierTracking, '$.shipping_label') AS shippingLabel,
+        JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'name', oi.name,
+            'quantity', oi.quantity
+          )
+        ) AS orderItems
+      FROM
+        \`order\` o
+      INNER JOIN
+        orderItem oi ON o.idOrder = oi.idOrder
+      INNER JOIN 
+        customer c ON o.idCustomer = c.idCustomer
+      WHERE
+        o.idOrder IN (${ordersIds.join(', ')})
+      GROUP BY
+        o.idOrder, o.carrierTracking;
     `;
 
         return await db.query(query, {
-            type: db.QueryTypes.UPDATE
+            type: db.QueryTypes.SELECT
         });
     } catch (error) {
-        console.error("Error updating carrier data:", error);
+        console.error("Error fetching orders:", error);
         throw error;
     }
 };
 
-
-
-export default {updateCarrierData};
-
-
+export default { getOrdersData };
