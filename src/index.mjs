@@ -9,22 +9,26 @@ export const handler = async (event, context) => {
 
         const allIncidentsTCC = await model.getOrdersWithIncidentsTCC();
 
-        const ordersIncidentAccountTCC = allIncidentsTCC.novedades.novedades;
+        if(allIncidentsTCC?.novedades?.novedades?.length > 0) {
+            const ordersIncidentAccountTCC = allIncidentsTCC.novedades.novedades;
 
-        let resultMatches = []
-        if (ordersIncidentsEvent.length > 0 && ordersIncidentAccountTCC.length > 0) {
-            resultMatches = dto.findMatches(ordersIncidentsEvent, ordersIncidentAccountTCC);
-        }
-
-        for (const {guideId, idnovedad, data, idOrder, idCarrierStatusUpdate} of resultMatches) {
-            const carrierData = await model.getCarrierData({idOrder, idCarrierStatusUpdate});
-            const newData = {
-                idNovedadTCC: idnovedad,
-                incidentData: data,
-                carrierData: carrierData,
-                guideId: guideId
+            let resultMatches = []
+            if (ordersIncidentsEvent.length > 0 && ordersIncidentAccountTCC.length > 0) {
+                resultMatches = dto.findMatches(ordersIncidentsEvent, ordersIncidentAccountTCC);
             }
-            await dao.updateCarrierData({idOrder, idCarrierStatusUpdate, newData: {...newData} });
+
+            for (const {guideId, idnovedad, data, idOrder, idCarrierStatusUpdate} of resultMatches) {
+                const carrierData = await model.getCarrierData({idOrder, idCarrierStatusUpdate});
+                const newData = {
+                    idNovedadTCC: idnovedad,
+                    incidentData: data,
+                    carrierData: carrierData,
+                    guideId: guideId
+                }
+                await dao.updateCarrierData({idOrder, idCarrierStatusUpdate, newData: {...newData} });
+            }
+        }else {
+            console.log("No hay Novedades que gestionar")
         }
 
         return {
