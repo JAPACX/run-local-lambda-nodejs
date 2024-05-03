@@ -5,19 +5,22 @@ export const handler = async (event, context) => {
     try {
         const userId = event.detail.userId
         const ordersIds = event.detail.ordersIds
+        const typeManifest = event.detail.typeManifest
 
         const ordersDataParsed = await model.getOrdersData({ordersIds: ordersIds});
-        const pdfBytes = await model.getManifest({ordersDataParsed: ordersDataParsed});
+        const pdfBytes = await model.getPrincipalPageManifest({ordersDataParsed: ordersDataParsed});
         const timestamp = new Date().getTime();
         const pdfFileName = `user-${userId}-manifest-${timestamp}.pdf`;
-        const s3Response = await model.uploadPdfToS3({pdfBytes: pdfBytes, pdfFileName: pdfFileName});
-        console.log(event)
+        // const s3Response = await model.uploadPdfToS3({pdfBytes: pdfBytes, pdfFileName: pdfFileName});
+
 
         return {
             statusCode: 200,
             body: JSON.stringify({
                 message: "Success, PDF uploaded to S3",
             }),
+            pdfFileName: pdfFileName,
+            pdfBytes: pdfBytes
         };
 
     } catch (error) {

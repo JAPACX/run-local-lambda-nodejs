@@ -10,7 +10,6 @@ const s3Client = new S3Client({region: `${process.env.REGION}`});
 
 const getOrdersData = async ({ordersIds: ordersIds}) => {
     try {
-
         const ordersData = await dao.getOrdersData({ordersIds: ordersIds});
         return dto.parseOrders(ordersData)
 
@@ -21,7 +20,7 @@ const getOrdersData = async ({ordersIds: ordersIds}) => {
 }
 
 
-const getManifest = async ({ordersDataParsed: ordersDataParsed}) => {
+const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) => {
     try {
 
         const {COORDINADORA, ENVIA, TCC, _99MINUTOS, ORDERS_DATA} = ordersDataParsed
@@ -316,20 +315,36 @@ const getManifest = async ({ordersDataParsed: ordersDataParsed}) => {
             }
         });
 
-        return await dto.addPdfsToDocument(
-            pdfDoc,
-            ORDERS_DATA.map((row) => row.shippingLabel),
-            A4_WIDTH,
-            A4_HEIGHT,
-        );
-
+        return await typeManifest({pdfDoc: pdfDoc, typeManifest: typeManifest, data: ORDERS_DATA});
 
     } catch (error) {
         console.error(error);
         throw error;
     }
-
 };
+
+const typeManifest = async ({pdfDoc, typeManifest, data}) => {
+    try {
+        switch (typeManifest) {
+            default:
+                const arrayOfPdfBuffers = await dto.generateArrayOfPdfBufferWithUrls({pdfUrls: data.map((row) => row.shippingLabel)})
+                return await addPdfsToDocument({originalPdfDoc: pdfDoc, ArrayOfPdfBuffers: arrayOfPdfBuffers});
+        }
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};
+
+
+const addPdfsToDocument = async ({originalPdfDoc, ArrayOfPdfBuffers}) => {
+    try {
+        return await dto.addPdfsToDocument({originalPdfDoc: originalPdfDoc, ArrayOfPdfBuffers: ArrayOfPdfBuffers});
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
 
 const uploadPdfToS3 = async ({pdfBytes: pdfBytes, pdfFileName: pdfFileName}) => {
     try {
@@ -345,7 +360,7 @@ const uploadPdfToS3 = async ({pdfBytes: pdfBytes, pdfFileName: pdfFileName}) => 
     }
 }
 
-export default {getOrdersData, getManifest, uploadPdfToS3}
+export default {getOrdersData, getPrincipalPageManifest, uploadPdfToS3}
 
 
 

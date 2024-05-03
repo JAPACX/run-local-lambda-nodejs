@@ -5,15 +5,16 @@ import {handler} from "./src/index.mjs";
 const app = express();
 const PORT = 3000;
 
-app.get("/", (req, res) => {
-    handler(event, {})
-        .then((response) => {
-            res.json(JSON.parse(response.body));
-        })
-        .catch((err) => {
-            console.error("Error executing Lambda without an event:", err);
-            res.status(500).send("Error processing request without event");
-        });
+app.get("/", async (req, res) => {
+    try {
+        const response = await handler(event, {});
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${response.pdfFileName}"`);
+        res.send(Buffer.from(response.pdfBytes));
+    } catch (err) {
+        console.error("Error executing Lambda without an event:", err);
+        res.status(500).send("Error processing request without event");
+    }
 });
 
 app.listen(PORT, () => {
@@ -34,9 +35,9 @@ const event = {
         "ordersIds": [
             "1739",
             "1726",
-            "1724",
-            "1717",
-            "1714"
+            "2404",
+            "2371",
+            "2262"
         ],
         "typeManifest": "normal"
     }

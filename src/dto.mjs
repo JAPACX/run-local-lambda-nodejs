@@ -1,5 +1,5 @@
 import axios from "axios";
-import { PDFDocument } from 'pdf-lib';
+import {PDFDocument} from 'pdf-lib';
 
 
 const parseOrders = (ordersData) => {
@@ -49,29 +49,31 @@ const parseOrders = (ordersData) => {
     return parsedData;
 }
 
-
-const addPdfsToDocument = async (originalPdfDoc, pdfUrls, fixedWidth = 500, fixedHeight = 800) => {
+const generateArrayOfPdfBufferWithUrls = async ({pdfUrls}) => {
     const pdfPromises = pdfUrls.map(url =>
-        axios.get(url, { responseType: 'arraybuffer', timeout: 600000 })
+        axios.get(url, {responseType: 'arraybuffer', timeout: 600000})
             .then(response => response.data)
             .catch(error => {
                 console.error(`Error fetching PDF from URL: ${url}`);
                 return null;
             })
     );
-
     const results = await Promise.allSettled(pdfPromises);
 
-    const pdfArrayBuffers = results
+    return results
         .filter(result => result.status === 'fulfilled' && result.value !== null)
         .map(result => result.value);
+}
 
-    for (const pdfBuffer of pdfArrayBuffers) {
+
+const addPdfsToDocument = async ({originalPdfDoc, ArrayOfPdfBuffers, fixedWidth = 595, fixedHeight = 800}) => {
+
+    for (const pdfBuffer of ArrayOfPdfBuffers) {
         const pdfDoc = await PDFDocument.load(pdfBuffer);
         const pageCount = pdfDoc.getPageCount();
         for (let i = 0; i < pageCount; i++) {
             const [embeddedPage] = await originalPdfDoc.embedPdf(pdfDoc, [i]);
-            const newPage = originalPdfDoc.addPage([fixedWidth, fixedHeight]);
+            const newPage = originalPdfDoc.addPage([fixedWidth, fixedWidth/2]);
 
             const scaleX = fixedWidth / embeddedPage.width;
             const scaleY = fixedHeight / embeddedPage.height;
@@ -85,10 +87,8 @@ const addPdfsToDocument = async (originalPdfDoc, pdfUrls, fixedWidth = 500, fixe
             });
         }
     }
-
     return await originalPdfDoc.save();
 };
 
-
-export default {parseOrders, addPdfsToDocument};
+export default {parseOrders, addPdfsToDocument, generateArrayOfPdfBufferWithUrls};
 
