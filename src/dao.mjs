@@ -20,11 +20,6 @@ const updateCarrierData = async ({idOrder, idCarrierStatusUpdate, newData}) => {
     }
 };
 
-
-
-
-
-
 const getCarrierData = async ({idOrder, idCarrierStatusUpdate}) => {
     try {
         const query = `select carrierData from orderShipmentUpdateHistory where idOrder = ${idOrder} and idCarrierStatusUpdate = ${idCarrierStatusUpdate} order by createdAt desc limit 1`;
@@ -93,8 +88,6 @@ const getOrdersWithIncidentsTCC = async () => {
             {headers}
         );
 
-        response.data.novedades = incidentsMocked
-
         return response.data;
     } catch (err) {
         console.error(err);
@@ -105,130 +98,3 @@ const getOrdersWithIncidentsTCC = async () => {
 export default {updateCarrierData, getCarrierData, getOrdersWithIncidentsTCC};
 
 
-const incidentsMocked = {
-    "cliente": {
-        "tipoidentificacion": "NIT",
-        "identificacion": "901320851",
-        "razonsocial": "PRIVILEGE TEAM S.A.S",
-        "direccion": "CL 33 A 71 10 MEDELLÍN ANTIOQUIA",
-        "telefono": "",
-        "cuentas": [
-            {
-                "codigo": "1164101",
-                "nombre": "PRIVILEGE TEAM S.A.S-RP 1164101"
-            },
-            {
-                "codigo": "5872601",
-                "nombre": "PRIVILEGE TEAM S.A.S-RP 5872601"
-            },
-            {
-                "codigo": "5872600",
-                "nombre": "PRIVILEGE TEAM S.A.S 5872600"
-            },
-            {
-                "codigo": "1164100",
-                "nombre": "PRIVILEGE TEAM S.A.S 1164100"
-            }
-        ]
-    },
-    "novedades": [
-        {
-            "idnovedad": "30117028355369137696092455331665937227",
-            "codigonovedad": "103452226",
-            "idtiponovedad": "947",
-            "unidadenegocio": "MENSAJERIA",
-            "numeroremesa": "609231861",
-            "fecharemesa": "2024-04-30",
-            "cuenta": "5872600",
-            "remitente": "PRIVILEGE TEAM",
-            "ciudadorigen": "MEDELLÍN",
-            "departamentoorigen": "ANTIOQUIA",
-            "ceoporigen": "MEDELLÍN",
-            "destinatario": "BEATRZ EUGENIAANGEL CARRILLO",
-            "direcciondestinatario": "EDIFICIO HELVÃ©TIA",
-            "ciudaddestino": "PEREIRA",
-            "departamentodestino": "RISARALDA",
-            "ceopdestino": "PEREIRA",
-            "novedad": "MERCANCÍA NO SALE A DISTRIBUCIÓN",
-            "complementonovedad": "DIRECCIÓN ERRADA",
-            "descripcionnovedad": "Su mercancía se encuentra en centro de operación destino. Aún no ha sido entregada al destinatario ya que se encontró una diferencia entre los datos que acompañan la mercancía vs la guía. Por lo tanto, estamos en verificación de la información para continuar con el proceso de entrega. Lo invitamos a que se comunique a través de nuestros canales de contacto para confirmar los datos del destinatario. ",
-            "comentariosnovedad": "LA DIRECCION ESTA INCOMPLETA FALTA EL BARRIO O SECTOR SIN NOMENCLATURA",
-            "fechaplanteanovedad": "2024-05-02 10:30:00",
-            "estadonovedad": "PLANTEADA",
-            "imputabilidadnovedad": "CLIENTE",
-            "atribuible": "",
-            "tipogestion": "GESTIÓN",
-            "correosolucion": "sacnovedadesmed@tcc.com.co",
-            "telefonosolucion": "",
-            "tiposolucion": "RE-OFRECIMIENTO,DEVOLUCION,CONTINUACION,OTRA",
-            "limiteregistros": "1000",
-            "observacionesremesa": "Apto 401"
-        },
-        {
-            "idnovedad": "31026652562479821859310723872361971886",
-            "codigonovedad": "103451770",
-            "idtiponovedad": "947",
-            "unidadenegocio": "MENSAJERIA",
-            "numeroremesa": "609227329",
-            "fecharemesa": "2024-04-30",
-            "cuenta": "5872600",
-            "remitente": "PRIVILEGE TEAM",
-            "ciudadorigen": "MEDELLÍN",
-            "departamentoorigen": "ANTIOQUIA",
-            "ceoporigen": "MEDELLÍN",
-            "destinatario": "CAMILOPARRA",
-            "direcciondestinatario": "CARRERA 13",
-            "ciudaddestino": "BOGOTÁ, D.C.",
-            "departamentodestino": "BOGOTA, D.C.",
-            "ceopdestino": "BOGOTÁ",
-            "novedad": "MERCANCÍA NO SALE A DISTRIBUCIÓN",
-            "complementonovedad": "DIRECCIÓN ERRADA",
-            "descripcionnovedad": "Su mercancía se encuentra en centro de operación destino. Aún no ha sido entregada al destinatario ya que se encontró una diferencia entre los datos que acompañan la mercancía vs la guía. Por lo tanto, estamos en verificación de la información para continuar con el proceso de entrega. Lo invitamos a que se comunique a través de nuestros canales de contacto para confirmar los datos del destinatario. ",
-            "comentariosnovedad": "CONFIRMAR DIRECCION PARA SU ENTREGA",
-            "fechaplanteanovedad": "2024-05-02 09:27:00",
-            "estadonovedad": "PLANTEADA",
-            "imputabilidadnovedad": "CLIENTE",
-            "atribuible": "",
-            "tipogestion": "GESTIÓN",
-            "correosolucion": "sacnovedadesmed@tcc.com.co",
-            "telefonosolucion": "",
-            "tiposolucion": "RE-OFRECIMIENTO,DEVOLUCION,CONTINUACION,OTRA",
-            "limiteregistros": "1000",
-            "observacionesremesa": "# 66-09 Apto 905"
-        },
-        {
-            "idnovedad": "31102450892356643591737988798760005557",
-            "codigonovedad": "103447964",
-            "idtiponovedad": "947",
-            "unidadenegocio": "MENSAJERIA",
-            "numeroremesa": "609231842",
-            "fecharemesa": "2024-04-30",
-            "cuenta": "5872600",
-            "remitente": "PRIVILEGE TEAM",
-            "ciudadorigen": "MEDELLÍN",
-            "departamentoorigen": "ANTIOQUIA",
-            "ceoporigen": "MEDELLÍN",
-            "destinatario": "JOVANNATAMAYO TAMAYO",
-            "direcciondestinatario": "BARRIO :CUARTO DE LEGUA",
-            "ciudaddestino": "SANTIAGO DE CALI",
-            "departamentodestino": "VALLE DEL CAUCA",
-            "ceopdestino": "CALI",
-            "novedad": "MERCANCÍA NO SALE A DISTRIBUCIÓN",
-            "complementonovedad": "DIRECCIÓN ERRADA",
-            "descripcionnovedad": "Su mercancía se encuentra en centro de operación destino. Aún no ha sido entregada al destinatario ya que se encontró una diferencia entre los datos que acompañan la mercancía vs la guía. Por lo tanto, estamos en verificación de la información para continuar con el proceso de entrega. Lo invitamos a que se comunique a través de nuestros canales de contacto para confirmar los datos del destinatario. ",
-            "comentariosnovedad": "LAS UNIDADES PRESENTAN UNA DIRECCION ERRADA O INCOMPLETA, SE NECESITA MAS INFORMACION PARA SU ENTREGA, FAVOR VALIDAR DATOS NOMENCLATURA, BARRIO, CASA NUMERO DE APT Y CIUDAD DESTINO GRACIAS",
-            "fechaplanteanovedad": "2024-05-01 12:49:25",
-            "estadonovedad": "INFORMADA",
-            "imputabilidadnovedad": "CLIENTE",
-            "atribuible": "",
-            "tipogestion": "GESTIÓN",
-            "correosolucion": "sacnovedadesmed@tcc.com.co",
-            "telefonosolucion": "",
-            "tiposolucion": "RE-OFRECIMIENTO,DEVOLUCION,CONTINUACION,OTRA",
-            "limiteregistros": "1000",
-            "observacionesremesa": "Calle 1 #56-109 Seminario B Casa 45"
-        }
-    ],
-    "codigoresultado": "0",
-    "mensajeresultado": "Se ha realizado la consulta de forma satisfactoria con (3) registros."
-}

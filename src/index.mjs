@@ -27,7 +27,6 @@ export const handler = async (event, context) => {
             await dao.updateCarrierData({idOrder, idCarrierStatusUpdate, newData: {...newData} });
         }
 
-
         return {
             statusCode: 200,
             body: JSON.stringify('Ejecución exitosa'),
