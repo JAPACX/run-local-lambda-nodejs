@@ -22,7 +22,7 @@ To debug your Lambda function locally, the `--inspect` flag has been added to th
 
 # Modifying the Lambda Function
 
-The example Lambda function is defined in `src/index.js`. You can modify this file to implement your specific logic. Changes to the Lambda function or the Express server setup will automatically reload the server, thanks to `nodemon`.
+The example Lambda function is defined in `src/index.mjs`. You can modify this file to implement your specific logic. Changes to the Lambda function or the Express server setup will automatically reload the server, thanks to `nodemon`.
 
 **To generate ZIP**: this command generate zip file to upload aws lambda in bin folder this contain node_modules, and other files required by aws for work well.
 
@@ -34,7 +34,7 @@ The example Lambda function is defined in `src/index.js`. You can modify this fi
 
 # Note on the Lambda Function File
 
-The `src/index.js` file contains the core logic of the Lambda function you're simulating locally. When you're ready to deploy to AWS Lambda, this is the file you should copy to AWS. The reason for this is that `src/index.js` encapsulates the event handler that AWS Lambda invokes in response to triggers, making it the essential component of your Lambda function.
+The `src/index.mjs` file contains the core logic of the Lambda function you're simulating locally. When you're ready to deploy to AWS Lambda, this is the file you should copy to AWS. The reason for this is that `src/index.mjs` encapsulates the event handler that AWS Lambda invokes in response to triggers, making it the essential component of your Lambda function.
 
 # Contributing
 
