@@ -4,14 +4,16 @@ import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
 import axios from 'axios';
 import dao from "./dao.mjs";
 import dto from "./dto.mjs";
+import utils from "./utils.mjs";
 
 const s3Client = new S3Client({region: `${process.env.REGION}`});
 
 
-const getOrdersData = async ({ordersIds: ordersIds}) => {
+const getOrdersData = async ({ordersIds: ordersIds, db: db}) => {
     try {
-        const ordersData = await dao.getOrdersData({ordersIds: ordersIds});
-        return dto.parseOrders(ordersData)
+
+        const ordersData = await dao.getOrdersData({ordersIds: ordersIds, db: db});
+        return dto.parseOrders({ordersData: ordersData});
 
     } catch (error) {
         console.error("Error:", error);
@@ -19,11 +21,29 @@ const getOrdersData = async ({ordersIds: ordersIds}) => {
     }
 }
 
+const sendEventData = async ({detailType, detail, source}) => {
+    try {
+        const URL_API = process.env.URL_API_SEND_EVENT;
+        const parameter = {
+            detail,
+            detailType,
+            source,
+        };
 
-const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) => {
+        return await axios.post(
+            `${URL_API}`,
+            parameter,
+        );
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+}
+
+
+const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, height, logoResponses}) => {
     try {
 
-        const {COORDINADORA, ENVIA, TCC, _99MINUTOS, ORDERS_DATA} = ordersDataParsed
 
         const pdfDoc = await PDFDocument.create();
         let initPage = 0;
@@ -32,45 +52,40 @@ const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) =>
         const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
         const blackColor = rgb(0, 0, 0);
+        const grayColor = rgb(0.8, 0.8, 0.8);
 
-        const A4_WIDTH = 595.28;
-        const A4_HEIGHT = 841.89;
+        const A4_WIDTH = width;
+        const A4_HEIGHT = height;
 
-        const logoUrls = [
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/mastershop_logo.png',
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/coordinadora.png',
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/99_minutos.png',
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/envia.png',
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/tcc.png',
-        ];
-
-        const logoPromises = logoUrls.map((url) =>
-            axios.get(url, {responseType: 'arraybuffer'}),
-        );
-        const logoResponses = await Promise.all(logoPromises);
         const logoImages = await Promise.all(
             logoResponses.map(async (response) => {
                 return pdfDoc.embedPng(response.data);
             }),
         );
-
-        const spaceBetweenLines = 10;
         const mainPage = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
         const fontSize = 10;
 
-        const svgPath =
-            'M 20,0 H 123 Q 143,0 143,20 V 80 Q 143,100 123,100 H 20 Q 0,100 0,80 V 20 Q 0,0 20,0 Z';
-
         const page = mainPage;
 
-        page.drawRectangle({
-            x: 45,
-            y: 568,
-            width: 500,
-            height: 30,
-            color: rgb(0.9, 0.9, 0.9),
-        });
 
+        const getLogoBufferByCarrierName = ({carrierName: carrierName}) => {
+            switch (carrierName) {
+                case 'COORDINADORA':
+                    return logoImages[1];
+                case '99MINUTOS':
+                    return logoImages[2];
+                case 'ENVIA':
+                    return logoImages[3];
+                case 'TCC':
+                    return logoImages[4];
+                default:
+                    return logoImages[0];
+            }
+        }
+
+        //--------------------- Consolidado de pedidos -------------------------
+
+        // Fondo
         page.drawRectangle({
             x: 170,
             y: 760,
@@ -79,92 +94,23 @@ const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) =>
             color: rgb(0.9, 0.9, 0.9),
         });
 
-        page.moveTo(170, page.getHeight() - 5);
-        page.moveDown(84);
-        page.drawSvgPath(svgPath, {scale: 0.6, borderOpacity: 0.8});
-
-        page.moveTo(265, page.getHeight() - 5);
-        page.moveDown(84);
-        page.drawSvgPath(svgPath, {scale: 0.6, borderOpacity: 0.8});
-
-        page.moveTo(360, page.getHeight() - 5);
-        page.moveDown(84);
-        page.drawSvgPath(svgPath, {scale: 0.6, borderOpacity: 0.8});
-
-        page.moveTo(455, page.getHeight() - 5);
-        page.moveDown(84);
-        page.drawSvgPath(svgPath, {scale: 0.6, borderOpacity: 0.8});
-
-        mainPage.drawText('Consolidado de Pedidos', {
-            x: 190,
+        // Titulo
+        mainPage.drawText(`Consolidado de Pedidos ${carrierName}`, {
+            x: 230,
             y: 770,
             size: fontSize + 2,
             font: boldFont,
             color: blackColor,
         });
 
-        // Coordinadora
-        mainPage.drawImage(logoImages[1], {
-            x: 175 + (80 - 60) / 2,
-            y: 730,
-            width: 60,
-            height: 20,
-        });
+        //------------------------------------------------------------------------
 
-        mainPage.drawText(`${COORDINADORA}`, {
-            x: 213,
+        // Logo transportadora
+        mainPage.drawImage(getLogoBufferByCarrierName({carrierName: carrierName}), {
+            x: 185,
             y: 710,
-            size: 18,
-            font: font,
-            color: blackColor,
-        });
-
-        // 99 minutos
-        mainPage.drawImage(logoImages[2], {
-            x: 260 + spaceBetweenLines + (80 - 60) / 2,
-            y: 730,
-            width: 60,
-            height: 20,
-        });
-
-        mainPage.drawText(`${_99MINUTOS}`, {
-            x: 300 + spaceBetweenLines,
-            y: 710,
-            size: 18,
-            font: font,
-            color: blackColor,
-        });
-
-        // Envia
-        mainPage.drawImage(logoImages[3], {
-            x: 430 + spaceBetweenLines * 3 + (80 - 60) / 2,
-            y: 730,
-            width: 60,
-            height: 15,
-        });
-
-        mainPage.drawText(`${ENVIA}`, {
-            x: 435 + 30 + spaceBetweenLines * 3,
-            y: 710,
-            size: 18,
-            font: font,
-            color: blackColor,
-        });
-
-        // Tcc Express
-        mainPage.drawImage(logoImages[4], {
-            x: 355 + spaceBetweenLines * 2 + (80 - 60) / 2,
-            y: 730,
-            width: 40,
-            height: 15,
-        });
-
-        mainPage.drawText(`${TCC}`, {
-            x: 355 + 30 + spaceBetweenLines * 2,
-            y: 710,
-            size: 18,
-            font: font,
-            color: blackColor,
+            width: 75,
+            height: 40,
         });
 
         // Logo MasterShop
@@ -175,18 +121,22 @@ const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) =>
             height: 100,
         });
 
-        let startY = 580;
-        const headerFontSize = 11;
-        const rowFontSize = 9;
-        const lineHeight = 15;
-
-        page.drawText(`Numero de Guías: ${ORDERS_DATA.length}`, {
-            x: 50,
-            y: 635,
-            size: fontSize + 2,
+        page.drawText(`Numero de Guías: ${carrierData.length}`, {
+            x: 280,
+            y: 735,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
+
+        page.drawText(`Total a recaudar`, {
+            x: 410,
+            y: 735,
+            size: fontSize,
+            font: boldFont,
+            color: blackColor,
+        });
+
 
         const currentDateTime = new Date();
 
@@ -207,34 +157,133 @@ const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) =>
 
         // Date
         page.drawText(`Fecha: ${date}`, {
-            x: 195,
-            y: 635,
-            size: fontSize + 2,
+            x: 280,
+            y: 720,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         // Time
         page.drawText(`Hora: ${time}`, {
-            x: 310,
-            y: 635,
-            size: fontSize + 2,
+            x: 280,
+            y: 705,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
+
+        //-----------------------------Firmas-------------------------------------
+
+        // Firma funcionario
+        page.drawText(`Firma funcionario: (${carrierName})`, {
+            x: 70,
+            y: 670,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        page.drawText(`_______________________`, {
+            x: 70,
+            y: 635,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        page.drawText(`CC:`, {
+            x: 70,
+            y: 615,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        // Firma Auxiliar
+        page.drawText(`Firma Auxiliar: (${carrierName})`, {
+            x: 250,
+            y: 670,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        page.drawText(`_______________________`, {
+            x: 250,
+            y: 635,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        page.drawText(`CC:`, {
+            x: 250,
+            y: 615,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        // Firma Bodega
+        page.drawText(`Firma Bodega`, {
+            x: 420,
+            y: 670,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        page.drawText(`_______________________`, {
+            x: 420,
+            y: 635,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        page.drawText(`Placa vehiculo:`, {
+            x: 420,
+            y: 615,
+            size: fontSize - 2,
+            font: boldFont,
+            color: blackColor,
+        });
+
+
+        //------------------------------------------------------------------------
+
+
+        //  Fondo de columnas N guia, Pedido, Productos....
+        page.drawRectangle({
+            x: 45,
+            y: 570,
+            width: 500,
+            height: 30,
+            color: rgb(0.9, 0.9, 0.9),
+        });
+
+        // Columnas de hoja
+        let startY = 580;
+        const headerFontSize = 9;
+        const rowFontSize = 7;
+        const lineHeight = 120;
+
         const headers = [
+            '#',
             'N° Guía',
-            'Pedido',
-            'Productos',
+            'N° Pedido',
+            'Nombre del producto',
+            'Und',
+            'Recaudo',
             'Cliente',
-            'Transportadora',
         ];
-        const columnPositions = [50, 130, 190, 330, 450, A4_WIDTH - 50];
+        const columnPositions = [50, 70, 130, 190, 330, 360, 410];
 
         // Headers
         headers.forEach((header, index) => {
-            mainPage.drawText(header, {
+            mainPage.drawText(`${header}`, {
                 x: columnPositions[index] + 5,
                 y: startY,
                 size: headerFontSize,
@@ -242,25 +291,37 @@ const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) =>
                 color: blackColor,
             });
         });
-        startY -= lineHeight * 2; // Spaces between headers
+        startY -= 30; // Spaces between header and rows
 
         // Draw rows
+        let totalToCollect = 0
+        carrierData.forEach((row, index) => {
+            let rowHeight = 50;
 
-        ORDERS_DATA.forEach((row) => {
-            let rowHeight = 0;
-
-            // N° Tracking Number
             const currentPage = pdfDoc.getPage(initPage);
-            currentPage.drawText(`${row.trackingNumber}`, {
+
+
+            if (index > 0) {
+                currentPage.drawText(`________________________________________________________________________________________________________________________________`, {
+                    x: 45,
+                    y: startY + 20,
+                    size: rowFontSize,
+                    font: font,
+                    color: grayColor,
+                });
+            }
+
+            // #
+            currentPage.drawText(`${index + 1}`, {
                 x: columnPositions[0] + 5,
-                y: startY,
-                size: rowFontSize,
+                y: startY - 2,
+                size: rowFontSize + 3,
                 font: font,
                 color: blackColor,
             });
 
-            // Order
-            currentPage.drawText(`${row.order}`, {
+            // N° Guia
+            currentPage.drawText(`${row.trackingNumber}`, {
                 x: columnPositions[1] + 5,
                 y: startY,
                 size: rowFontSize,
@@ -268,54 +329,201 @@ const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) =>
                 color: blackColor,
             });
 
-            // Column of customer and carrier
-            const truncateNameCustomer =
-                row.customer.length > 20
-                    ? row.customer.substring(0, 20) + '...'
-                    : row.customer;
-            currentPage.drawText(truncateNameCustomer, {
-                x: columnPositions[3],
+            // Tarifa de envio Texto
+            currentPage.drawText(`Valor envio:`, {
+                x: columnPositions[1] + 5,
+                y: startY - 18,
+                size: rowFontSize,
+                font: font,
+                color: blackColor,
+            });
+
+            // Tarifa de envio
+            currentPage.drawText(`$${row.shippingRate.toLocaleString()}`, {
+                x: columnPositions[2] + 5,
+                y: startY - 18,
+                size: rowFontSize,
+                font: font,
+                color: blackColor,
+            });
+
+
+            // N° Pedido
+            currentPage.drawText(`${row.order}`, {
+                x: columnPositions[2] + 5,
                 y: startY,
                 size: rowFontSize,
                 font: font,
                 color: blackColor,
             });
-            currentPage.drawText(row.carrier, {
-                x: columnPositions[4] + 5,
+
+            //------------------------ Cliente ---------------------------------
+
+            const fullName = row.customer.split(' ');
+
+            let firstName = '';
+            let lastName = null;
+
+            if (fullName.length <= 2 || row.customer.length < 40) {
+                firstName = row.customer;
+            } else {
+                firstName = fullName.slice(0, 2).join(' ');
+                lastName = fullName.slice(2).join(' ');
+            }
+
+            currentPage.drawText(`${firstName} `, {
+                x: columnPositions[6] + 5,
                 y: startY,
                 size: rowFontSize,
                 font: font,
                 color: blackColor,
             });
+
+            let startYClient = startY
+
+            if (lastName) {
+                startYClient = startY - 15
+                currentPage.drawText(`${lastName} `, {
+                    x: columnPositions[6] + 5,
+                    y: startYClient,
+                    size: rowFontSize,
+                    font: font,
+                    color: blackColor,
+                });
+
+            }
+
+            // Telefono
+            startYClient -= 15
+            currentPage.drawText(`Tel: ${row.phone} `, {
+                x: columnPositions[6] + 5,
+                y: startYClient,
+                size: rowFontSize,
+                font: font,
+                color: blackColor,
+            });
+
+            // Ciudad
+            startYClient -= 15
+            currentPage.drawText(`Ciudad: ${row.city} `, {
+                x: columnPositions[6] + 5,
+                y: startYClient,
+                size: rowFontSize,
+                font: font,
+                color: blackColor,
+            });
+
+            // Departamento
+            startYClient -= 15
+            currentPage.drawText(`Dpto: ${row.state} `, {
+                x: columnPositions[6] + 5,
+                y: startYClient,
+                size: rowFontSize,
+                font: font,
+                color: blackColor,
+            });
+
+            // Direccion
+            startYClient -= 15;
+
+            const address1 = row.address1;
+            const maxLength = 25;
+
+            if (address1.length > maxLength) {
+                const lines = [];
+                let remainingText = address1;
+
+                while (remainingText.length > 0) {
+                    const line = remainingText.substring(0, maxLength);
+                    lines.push(line);
+                    remainingText = remainingText.substring(maxLength);
+                }
+
+                lines.forEach((line, index) => {
+                    currentPage.drawText(index === 0 ? `Direccion: ${line}` : line, {
+                        x: columnPositions[6] + 5,
+                        y: startYClient - index * 15,
+                        size: rowFontSize,
+                        font: font,
+                        color: blackColor,
+                    });
+                });
+            } else {
+                currentPage.drawText(`Direccion: ${address1}`, {
+                    x: columnPositions[6] + 5,
+                    y: startYClient,
+                    size: rowFontSize,
+                    font: font,
+                    color: blackColor,
+                });
+            }
+
+
+            //----------------------------------------------------------------
+
+            // Recaudo Texto
+            currentPage.drawText(`${row.paymentMethod?.toLowerCase() === 'cod' ? row.totalSeller.toLocaleString() : 'NO'}`, {
+                x: columnPositions[5] + 5,
+                y: startY,
+                size: rowFontSize,
+                font: font,
+                color: blackColor,
+            });
+
+            // Condicional para validar si se debe mostrar el valor de recaudo
+            if (row.paymentMethod?.toLowerCase() === 'cod') {
+                totalToCollect += parseInt(row.totalSeller)
+            }
 
             const products = row.products;
             let productTextY = startY;
-            products.forEach((product) => {
-                const truncatedProduct =
-                    product.length > 27 ? product.substring(0, 27) + '...' : product;
+            products.forEach(({name, quantity}) => {
+                let remainingText = utils.cleanText(name);
 
-                currentPage.drawText(truncatedProduct, {
-                    x: columnPositions[2] + 5,
+                currentPage.drawText(`(${quantity})`, {
+                    x: columnPositions[4] + 5,
                     y: productTextY,
                     size: rowFontSize,
                     font: font,
                     color: blackColor,
                 });
 
-                productTextY -= lineHeight;
-                rowHeight += lineHeight;
+                while (remainingText.length > 0) {
+                    const truncatedProduct = remainingText.substring(0, 33);
+                    currentPage.drawText(truncatedProduct, {
+                        x: columnPositions[3] + 5,
+                        y: productTextY,
+                        size: rowFontSize,
+                        font: font,
+                        color: blackColor,
+                    });
+                    remainingText = remainingText.substring(33).trim();
+                    productTextY -= 15;
+                    rowHeight += 15;
+                }
+
             });
+
 
             rowHeight = Math.max(rowHeight, lineHeight);
             startY -= rowHeight;
-            if (startY < 50) {
-                startY = 830;
+            if (startY < 80) {
+                startY = 750;
                 initPage++;
                 pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
             }
         });
+        // Total a recaudar Valor
+        page.drawText(`$${totalToCollect.toLocaleString()}`, {
+            x: 415,
+            y: 705,
+            size: fontSize + 5,
+            font: boldFont,
+            color: blackColor,
+        });
 
-        return await typeManifest({pdfDoc: pdfDoc, typeManifest: typeManifest, data: ORDERS_DATA});
+        // Documento sin guardar en algun formato
+        return pdfDoc
 
     } catch (error) {
         console.error(error);
@@ -323,48 +531,99 @@ const getPrincipalPageManifest = async ({ordersDataParsed: ordersDataParsed}) =>
     }
 };
 
-const typeManifest = async ({pdfDoc, typeManifest, data}) => {
+const resumeCarriers = async ({carriersData, pageWidth, pageHeight}) => {
     try {
-        switch (typeManifest) {
-            default:
-                const arrayOfPdfBuffers = await dto.generateArrayOfPdfBufferWithUrls({pdfUrls: data.map((row) => row.shippingLabel)})
-                return await addPdfsToDocument({originalPdfDoc: pdfDoc, ArrayOfPdfBuffers: arrayOfPdfBuffers});
+
+        const pdfLibsDocuments = [];
+
+        const logoUrls = [
+            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/mastershop_logo.png',
+            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/coordinadora.png',
+            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/99_minutos.png',
+            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/envia.png',
+            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/tcc.png',
+        ];
+
+        const logoPromises = logoUrls.map((url) => axios.get(url, {responseType: 'arraybuffer'}));
+        const logoResponses = await Promise.all(logoPromises);
+
+        const carriers = [
+            {data: carriersData.TCC, name: 'TCC'},
+            {data: carriersData.COORDINADORA, name: 'COORDINADORA'},
+            {data: carriersData.ENVIA, name: 'ENVIA'},
+            {data: carriersData._99MINUTOS, name: '99MINUTOS'}
+        ];
+
+        for (const carrier of carriers) {
+            if (carrier.data.length) {
+                const pdfDoc = await getMainPageByCarrierInBase64({
+                    carrierData: carrier.data,
+                    carrierName: carrier.name,
+                    width: pageWidth,
+                    height: pageHeight,
+                    logoResponses: logoResponses
+                });
+                pdfLibsDocuments.push(pdfDoc);
+            }
+        }
+
+        if (pdfLibsDocuments.length) {
+            return await dto.mergedPdfLibDocument(pdfLibsDocuments);
+        } else {
+            throw new Error('No carrier data available');
         }
     } catch (error) {
-        console.error(error);
+        console.error(` Error: ${error}`);
         throw error;
     }
-};
+}
 
-
-const addPdfsToDocument = async ({originalPdfDoc, ArrayOfPdfBuffers}) => {
+const addTrackingProofsToDocument = async ({ordersData, pageHeight, pageWidth}) => {
     try {
-        return await dto.addPdfsToDocument({originalPdfDoc: originalPdfDoc, ArrayOfPdfBuffers: ArrayOfPdfBuffers});
+        const mainPagesBase64 = await resumeCarriers({
+            carriersData: ordersData,
+            pageHeight,
+            pageWidth
+        });
+
+        const allShippingLabels = [
+            ...ordersData.COORDINADORA,
+            ...ordersData.ENVIA,
+            ...ordersData.TCC,
+            ...ordersData._99MINUTOS
+        ].filter(order => order.shippingLabel).map(order => order.shippingLabel);
+
+        const trackingProofsBase64 = await dao.arrayBase64FromUrls({pdfUrls: allShippingLabels});
+
+        return await dto.mergedBase64({
+            originalPdf: mainPagesBase64,
+            pdfArrayBase64: trackingProofsBase64,
+            pageHeight,
+            pageWidth
+        });
     } catch (error) {
         console.error(error);
         throw error;
     }
 }
 
-const uploadPdfToS3 = async ({pdfBytes: pdfBytes, pdfFileName: pdfFileName}) => {
+
+const uploadPdfToS3 = async ({pdfBase64, pdfFileName}) => {
     try {
+
+        const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+
         const command = new PutObjectCommand({
             Bucket: 'bemaster-res',
             Key: `mastershop/users/manifest/${pdfFileName}`,
-            Body: pdfBytes,
+            Body: pdfBuffer,
         });
+
         return await s3Client.send(command);
     } catch (error) {
         console.error(error);
         throw error;
     }
-}
+};
 
-export default {getOrdersData, getPrincipalPageManifest, uploadPdfToS3}
-
-
-
-
-
-
-
+export default {getOrdersData, uploadPdfToS3, addTrackingProofsToDocument, sendEventData};
