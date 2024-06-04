@@ -1,4 +1,4 @@
-import model from "./model.mjs";
+import model from "./model/model.mjs";
 import utils from "./utils.mjs";
 import database from "./database/config.mjs";
 
@@ -36,6 +36,7 @@ export const handler = async (event, context) => {
         const A4_WIDTH = 595.28;
         const A4_HEIGHT = 841.89;
         const ordersData = await model.getOrdersData({ordersIds: ordersIds, db: db});
+        const resumedOrdersData = await model.resumeOrdersData({ordersIds: ordersIds, db: db});
 
         if (!ordersData || ordersData.ENVIA.length === 0 && ordersData.COORDINADORA.length === 0 && ordersData.TCC.length === 0 && ordersData._99MINUTOS.length === 0) {
             return {
@@ -47,7 +48,7 @@ export const handler = async (event, context) => {
         }
 
         const pdfBase64 = await model.addTrackingProofsToDocument({
-            ordersData: ordersData,
+            ordersData: {...ordersData, resumedOrdersData},
             pageHeight: A4_HEIGHT,
             pageWidth: A4_WIDTH
         });

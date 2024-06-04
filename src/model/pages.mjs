@@ -1,50 +1,9 @@
-import {PDFDocument, rgb, StandardFonts} from 'pdf-lib';
-import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
-
-import axios from 'axios';
-import dao from "./dao.mjs";
-import dto from "./dto.mjs";
-import utils from "./utils.mjs";
-
-const s3Client = new S3Client({region: `${process.env.REGION}`});
-
-
-const getOrdersData = async ({ordersIds: ordersIds, db: db}) => {
-    try {
-
-        const ordersData = await dao.getOrdersData({ordersIds: ordersIds, db: db});
-        return dto.parseOrders({ordersData: ordersData});
-
-    } catch (error) {
-        console.error("Error:", error);
-        throw error;
-    }
-}
-
-const sendEventData = async ({detailType, detail, source}) => {
-    try {
-        const URL_API = process.env.URL_API_SEND_EVENT;
-        const parameter = {
-            detail,
-            detailType,
-            source,
-        };
-
-        return await axios.post(
-            `${URL_API}`,
-            parameter,
-        );
-    } catch (err) {
-        console.error(err);
-        throw err;
-    }
-}
+import {PDFDocument, rgb, StandardFonts} from "pdf-lib";
+import utils from "../utils.mjs";
 
 
 const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, height, logoResponses}) => {
     try {
-
-
         const pdfDoc = await PDFDocument.create();
         let initPage = 0;
 
@@ -269,7 +228,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         let startY = 590;
         const headerFontSize = 9;
         const rowFontSize = 7;
-        const lineHeight = 60;
+        const lineHeight = 25;
 
         const headers = [
             '#',
@@ -297,7 +256,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         // Draw rows
         let totalToCollect = 0
         carrierData.forEach((row, index) => {
-            let rowHeight = 30;
+            let rowHeight = 25;
 
             const currentPage = pdfDoc.getPage(initPage);
 
@@ -333,7 +292,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             // Tarifa de envio Texto
             currentPage.drawText(`Valor envio:`, {
                 x: columnPositions[1] + 5,
-                y: startY - 18,
+                y: startY - 10,
                 size: rowFontSize,
                 font: font,
                 color: blackColor,
@@ -342,7 +301,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             // Tarifa de envio
             currentPage.drawText(`$${row.shippingRate.toLocaleString()}`, {
                 x: columnPositions[2] + 5,
-                y: startY - 18,
+                y: startY - 10,
                 size: rowFontSize,
                 font: font,
                 color: blackColor,
@@ -383,7 +342,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             let startYClient = startY
 
             // Ubicacion
-            startYClient -= 15
+            startYClient -= 10
             currentPage.drawText(`${row.city}, ${row.state}`, {
                 x: columnPositions[6] + 5,
                 y: startYClient,
@@ -432,7 +391,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
                     });
                     remainingText = remainingText.substring(33).trim();
                     productTextY -= 15;
-                    rowHeight += 15;
+                    rowHeight += 10;
                 }
             });
 
@@ -463,99 +422,178 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
     }
 };
 
-const resumeCarriers = async ({carriersData, pageWidth, pageHeight}) => {
+const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMastershop}) => {
     try {
+        const pdfDoc = await PDFDocument.create();
+        let initPage = 0;
 
-        const pdfLibsDocuments = [];
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-        const logoUrls = [
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/mastershop_logo.png',
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/coordinadora.png',
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/99_minutos.png',
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/envia.png',
-            'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/tcc.png',
+        const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+        const blackColor = rgb(0, 0, 0);
+        const grayColor = rgb(0.8, 0.8, 0.8);
+
+        const A4_WIDTH = width;
+        const A4_HEIGHT = height;
+
+        const mainLogo = await pdfDoc.embedPng(logoMastershop)
+        const mainPage = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+        const fontSize = 7;
+
+        const page = mainPage;
+
+        //------------------------------------------------------------------------
+
+        // Logo MasterShop
+        mainPage.drawImage(mainLogo, {
+            x: 50,
+            y: 695,
+            width: 100,
+            height: 100,
+        });
+
+        // Relations of products
+        page.drawText(`RELACION DE PRODUCTOS`, {
+            x: 230,
+            y: 750,
+            size: fontSize + 10,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        // Relations of products
+        page.drawText(`Total a Despachar`, {
+            x: 230,
+            y: 730,
+            size: fontSize + 8,
+            font: boldFont,
+            color: blackColor,
+        });
+
+        const currentDateTime = new Date();
+
+        const optionsDate = {
+            timeZone: 'America/Bogota',
+        };
+
+        const date = currentDateTime.toLocaleDateString('es-ES', optionsDate);
+
+        // Date
+        page.drawText(`Fecha: ${date}`, {
+            x: 230,
+            y: 700,
+            size: fontSize + 8,
+            font: font,
+            color: blackColor,
+        });
+
+
+        page.drawRectangle({
+            x: 45,
+            y: 640,
+            width: 500,
+            height: 30,
+            color: rgb(0.8, 0.8, 0.8),
+        });
+
+        // Columnas de hoja
+        let startY = 650;
+        const headerFontSize = 9;
+        const rowFontSize = 7;
+        const lineHeight = 10;
+
+        const headers = [
+            'SKU',
+            'ID',
+            'Producto',
+            'Unidades'
         ];
+        const columnPositions = [60, 150, 220, 470];
 
-        const logoPromises = logoUrls.map((url) => axios.get(url, {responseType: 'arraybuffer'}));
-        const logoResponses = await Promise.all(logoPromises);
+        // Headers
+        headers.forEach((header, index) => {
+            mainPage.drawText(`${header}`, {
+                x: columnPositions[index] + 5,
+                y: startY,
+                size: headerFontSize,
+                font: boldFont,
+                color: blackColor,
+            });
+        });
+        startY -= 30;
 
-        const carriers = [
-            {data: carriersData.TCC, name: 'TCC'},
-            {data: carriersData.COORDINADORA, name: 'COORDINADORA'},
-            {data: carriersData.ENVIA, name: 'ENVIA'},
-            {data: carriersData._99MINUTOS, name: '99MINUTOS'}
-        ];
+        resumedOrdersData.forEach((row, index) => {
+            let rowHeight = 10;
 
-        for (const carrier of carriers) {
-            if (carrier.data.length) {
-                const pdfDoc = await getMainPageByCarrierInBase64({
-                    carrierData: carrier.data,
-                    carrierName: carrier.name,
-                    width: pageWidth,
-                    height: pageHeight,
-                    logoResponses: logoResponses
+            const currentPage = pdfDoc.getPage(initPage);
+
+            if (index > 0) {
+                currentPage.drawText(`________________________________________________________________________________________________________________________________`, {
+                    x: 45,
+                    y: startY + 20,
+                    size: rowFontSize,
+                    font: font,
+                    color: grayColor,
                 });
-                pdfLibsDocuments.push(pdfDoc);
             }
-        }
 
-        if (pdfLibsDocuments.length) {
-            return await dto.mergedPdfLibDocument(pdfLibsDocuments);
-        } else {
-            throw new Error('No carrier data available');
-        }
-    } catch (error) {
-        console.error(` Error: ${error}`);
-        throw error;
-    }
-}
+            currentPage.drawText(`${row.sku && row.sku !== 'null' ? row.sku : '-'}`, {
+                x: columnPositions[0] + 5,
+                y: startY - 2,
+                size: rowFontSize + 3,
+                font: font,
+                color: blackColor,
+            });
 
-const addTrackingProofsToDocument = async ({ordersData, pageHeight, pageWidth}) => {
-    try {
-        const mainPagesBase64 = await resumeCarriers({
-            carriersData: ordersData,
-            pageHeight,
-            pageWidth
+            currentPage.drawText(`${row.idProduct}`, {
+                x: columnPositions[1] + 5,
+                y: startY - 2,
+                size: rowFontSize + 3,
+                font: font,
+                color: blackColor,
+            });
+
+            currentPage.drawText(`${row.totalQuantity}`, {
+                x: columnPositions[3] + 20,
+                y: startY - 2,
+                size: rowFontSize + 3,
+                font: font,
+                color: blackColor,
+            });
+
+            let productTextY = startY;
+            let remainingText = utils.cleanText(row.productName);
+            while (remainingText.length > 0) {
+                const truncatedProduct = remainingText.substring(0, 60);
+                currentPage.drawText(truncatedProduct, {
+                    x: columnPositions[2] + 5,
+                    y: productTextY,
+                    size: rowFontSize,
+                    font: font,
+                    color: blackColor,
+                });
+                remainingText = remainingText.substring(60).trim();
+                productTextY -= 15;
+                rowHeight += 15;
+            }
+
+            rowHeight = Math.max(rowHeight, lineHeight);
+            startY -= rowHeight;
+
+            if (startY < 80) {
+                startY = 750;
+                initPage++;
+                pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+            }
         });
+        return pdfDoc
 
-        const allShippingLabels = [
-            ...ordersData.COORDINADORA,
-            ...ordersData.ENVIA,
-            ...ordersData.TCC,
-            ...ordersData._99MINUTOS
-        ].filter(order => order.shippingLabel).map(order => order.shippingLabel);
-
-        const trackingProofsBase64 = await dao.arrayBase64FromUrls({pdfUrls: allShippingLabels});
-
-        return await dto.mergedBase64({
-            originalPdf: mainPagesBase64,
-            pdfArrayBase64: trackingProofsBase64,
-            pageHeight,
-            pageWidth
-        });
-    } catch (error) {
-        console.error(error);
-        throw error;
-    }
-}
-
-
-const uploadPdfToS3 = async ({pdfBase64, pdfFileName}) => {
-    try {
-
-        const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-
-        const command = new PutObjectCommand({
-            Bucket: 'bemaster-res',
-            Key: `mastershop/users/manifest/${pdfFileName}`,
-            Body: pdfBuffer,
-        });
-
-        return await s3Client.send(command);
     } catch (error) {
         console.error(error);
         throw error;
     }
 };
 
-export default {getOrdersData, uploadPdfToS3, addTrackingProofsToDocument, sendEventData};
+
+export default {getConsolidatedProducts, getMainPageByCarrierInBase64}

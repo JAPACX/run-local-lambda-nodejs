@@ -1,8 +1,7 @@
-import axios from "axios";
 import {PDFDocument} from 'pdf-lib';
 
 
-const parseOrders = ({ordersData}) => {
+const groupOrderDataByCarrier = ({ordersData}) => {
     const parsedData = {
         COORDINADORA: [],
         ENVIA: [],
@@ -110,4 +109,4 @@ const mergedPdfLibDocument = async (pdfDocs) => {
 };
 
 
-export default {parseOrders, mergedBase64, mergedPdfLibDocument};
+export default {groupOrderDataByCarrier, mergedBase64, mergedPdfLibDocument};

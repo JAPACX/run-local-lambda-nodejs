@@ -50,6 +50,37 @@ const getOrdersData = async ({ordersIds, db}) => {
     }
 };
 
+const resumeOrdersData = async ({ordersIds, db}) => {
+    try {
+        const query = `
+        SELECT
+        p.idProduct,
+        v.sku,
+        CASE
+            WHEN v.name = 'Default Variant' THEN p.name
+            ELSE CONCAT(p.name, ' ', v.name)
+        END AS productName,
+        SUM(oi.quantity) AS totalQuantity
+        FROM \`order\` o
+        INNER JOIN orderItem oi ON o.idOrder = oi.idOrder
+        INNER JOIN customer c ON o.idCustomer = c.idCustomer
+        INNER JOIN db_bemaster_aff.product p ON oi.idProduct = p.idProduct
+        INNER JOIN db_bemaster_aff.variant v ON oi.idVariant = v.idVariant
+        WHERE o.idOrder IN (${ordersIds.join(', ')})
+          AND carrierTrackingCode IS NOT NULL
+          AND carrierTrackingCode > 0
+        GROUP BY v.sku, p.idProduct, productName;
+        `;
+
+        return await db.query(query, {
+            type: db.QueryTypes.SELECT
+        });
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+        throw error;
+    }
+};
+
 const arrayBase64FromUrls = async ({pdfUrls}) => {
     const retryCount = 3;
 
@@ -81,4 +112,4 @@ const arrayBase64FromUrls = async ({pdfUrls}) => {
         );
 };
 
-export default {getOrdersData, arrayBase64FromUrls};
+export default {getOrdersData, resumeOrdersData, arrayBase64FromUrls};
