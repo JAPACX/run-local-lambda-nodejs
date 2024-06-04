@@ -36,7 +36,7 @@ const eventBridgeEvent = {
     detail: {
         userId: '66156',
         ordersIds: [
-            '3403', '3401'
+            '3401', '3402'
         ],
         environment: 'prod'
     }
@@ -95,8 +95,11 @@ const apiGatewayEvent = {
         VerifyParam: 'mastershop-prod-apigateway-to-lb-verify-19911210',
         VerifyParamLogistics: 'mastershop-logistics-prod-apigateway-to-lb-verify-19911210'
     },
-    body: '{"ordersIds":["3270","3188","3185","3184"]}',
+    body: '{"ordersIds":["2637", "2639"]}',
     isBase64Encoded: false
 }
+
+
+
 
 

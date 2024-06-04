@@ -49,6 +49,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         let initPage = 0;
 
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
         const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
         const blackColor = rgb(0, 0, 0);
@@ -63,7 +64,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             }),
         );
         const mainPage = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
-        const fontSize = 10;
+        const fontSize = 7;
 
         const page = mainPage;
 
@@ -91,7 +92,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             y: 760,
             width: 370,
             height: 30,
-            color: rgb(0.9, 0.9, 0.9),
+            color: rgb(0.8, 0.8, 0.8),
         });
 
         // Titulo
@@ -180,23 +181,23 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         page.drawText(`Firma funcionario: (${carrierName})`, {
             x: 70,
             y: 670,
-            size: fontSize - 2,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         page.drawText(`_______________________`, {
             x: 70,
-            y: 635,
-            size: fontSize - 2,
+            y: 645,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         page.drawText(`CC:`, {
             x: 70,
-            y: 615,
-            size: fontSize - 2,
+            y: 630,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
@@ -205,23 +206,23 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         page.drawText(`Firma Auxiliar: (${carrierName})`, {
             x: 250,
             y: 670,
-            size: fontSize - 2,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         page.drawText(`_______________________`, {
             x: 250,
-            y: 635,
-            size: fontSize - 2,
+            y: 645,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         page.drawText(`CC:`, {
             x: 250,
-            y: 615,
-            size: fontSize - 2,
+            y: 630,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
@@ -230,23 +231,23 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         page.drawText(`Firma Bodega`, {
             x: 420,
             y: 670,
-            size: fontSize - 2,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         page.drawText(`_______________________`, {
             x: 420,
-            y: 635,
-            size: fontSize - 2,
+            y: 645,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         page.drawText(`Placa vehiculo:`, {
             x: 420,
-            y: 615,
-            size: fontSize - 2,
+            y: 630,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
@@ -258,17 +259,17 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         //  Fondo de columnas N guia, Pedido, Productos....
         page.drawRectangle({
             x: 45,
-            y: 570,
+            y: 580,
             width: 500,
             height: 30,
-            color: rgb(0.9, 0.9, 0.9),
+            color: rgb(0.8, 0.8, 0.8),
         });
 
         // Columnas de hoja
-        let startY = 580;
+        let startY = 590;
         const headerFontSize = 9;
         const rowFontSize = 7;
-        const lineHeight = 120;
+        const lineHeight = 60;
 
         const headers = [
             '#',
@@ -296,7 +297,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         // Draw rows
         let totalToCollect = 0
         carrierData.forEach((row, index) => {
-            let rowHeight = 50;
+            let rowHeight = 30;
 
             const currentPage = pdfDoc.getPage(initPage);
 
@@ -359,19 +360,19 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
 
             //------------------------ Cliente ---------------------------------
 
-            const fullName = row.customer.split(' ');
+            const clientName = row.customer.split(' ');
 
-            let firstName = '';
-            let lastName = null;
-
-            if (fullName.length <= 2 || row.customer.length < 40) {
-                firstName = row.customer;
+            let firstName = clientName.shift();
+            let lastName;
+            if (clientName.length === 1) {
+                lastName = clientName[0];
+            } else if (clientName.length >= 2) {
+                lastName = clientName[1];
             } else {
-                firstName = fullName.slice(0, 2).join(' ');
-                lastName = fullName.slice(2).join(' ');
+                lastName = "";
             }
 
-            currentPage.drawText(`${firstName} `, {
+            currentPage.drawText(`${firstName} ${lastName}, Tel: ${row.phone}`, {
                 x: columnPositions[6] + 5,
                 y: startY,
                 size: rowFontSize,
@@ -381,83 +382,15 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
 
             let startYClient = startY
 
-            if (lastName) {
-                startYClient = startY - 15
-                currentPage.drawText(`${lastName} `, {
-                    x: columnPositions[6] + 5,
-                    y: startYClient,
-                    size: rowFontSize,
-                    font: font,
-                    color: blackColor,
-                });
-
-            }
-
-            // Telefono
+            // Ubicacion
             startYClient -= 15
-            currentPage.drawText(`Tel: ${row.phone} `, {
+            currentPage.drawText(`${row.city}, ${row.state}`, {
                 x: columnPositions[6] + 5,
                 y: startYClient,
                 size: rowFontSize,
                 font: font,
                 color: blackColor,
             });
-
-            // Ciudad
-            startYClient -= 15
-            currentPage.drawText(`Ciudad: ${row.city} `, {
-                x: columnPositions[6] + 5,
-                y: startYClient,
-                size: rowFontSize,
-                font: font,
-                color: blackColor,
-            });
-
-            // Departamento
-            startYClient -= 15
-            currentPage.drawText(`Dpto: ${row.state} `, {
-                x: columnPositions[6] + 5,
-                y: startYClient,
-                size: rowFontSize,
-                font: font,
-                color: blackColor,
-            });
-
-            // Direccion
-            startYClient -= 15;
-
-            const address1 = row.address1;
-            const maxLength = 25;
-
-            if (address1.length > maxLength) {
-                const lines = [];
-                let remainingText = address1;
-
-                while (remainingText.length > 0) {
-                    const line = remainingText.substring(0, maxLength);
-                    lines.push(line);
-                    remainingText = remainingText.substring(maxLength);
-                }
-
-                lines.forEach((line, index) => {
-                    currentPage.drawText(index === 0 ? `Direccion: ${line}` : line, {
-                        x: columnPositions[6] + 5,
-                        y: startYClient - index * 15,
-                        size: rowFontSize,
-                        font: font,
-                        color: blackColor,
-                    });
-                });
-            } else {
-                currentPage.drawText(`Direccion: ${address1}`, {
-                    x: columnPositions[6] + 5,
-                    y: startYClient,
-                    size: rowFontSize,
-                    font: font,
-                    color: blackColor,
-                });
-            }
-
 
             //----------------------------------------------------------------
 
@@ -501,12 +434,11 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
                     productTextY -= 15;
                     rowHeight += 15;
                 }
-
             });
-
 
             rowHeight = Math.max(rowHeight, lineHeight);
             startY -= rowHeight;
+
             if (startY < 80) {
                 startY = 750;
                 initPage++;
