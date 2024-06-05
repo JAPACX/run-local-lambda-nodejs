@@ -20,7 +20,7 @@ const decodeJWTToken = (token) => {
         exp: decodedToken.exp,
         role: decodedToken['custom:role'],
     };
-}
+};
 
 const getEventDetails = (event) =>{
     let origin, environment, body, userId, ordersIds ;
@@ -33,18 +33,18 @@ const getEventDetails = (event) =>{
         stage === 'qa' || stage === 'prod' ? stage = 'prod' : stage = 'dev';
 
         origin = 'apiGateway';
-        environment = stage
-        userId = decodeJWTToken(event.headers["x-auth-id"]).idUser
-        ordersIds = body.ordersIds
+        environment = stage;
+        userId = decodeJWTToken(event.headers["x-auth-id"]).idUser;
+        ordersIds = body.ordersIds;
     } else {
         origin = 'EventBridge';
-        userId = event.detail.userId
-        ordersIds = event.detail.ordersIds
-        environment = event.detail.environment || 'prod'
+        userId = event.detail.userId;
+        ordersIds = event.detail.ordersIds;
+        environment = event.detail.environment || 'prod';
     }
 
     return { origin, environment, userId, ordersIds };
-}
+};
 
 
 export default {cleanText, decodeJWTToken, getEventDetails};

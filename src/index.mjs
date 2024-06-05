@@ -7,16 +7,16 @@ export const handler = async (event, context) => {
     try {
 
         const {origin, environment, userId, ordersIds} = utils.getEventDetails(event);
-        console.log("event --> :", event)
+        console.log("event --> :", event);
         console.log("context --> :", context);
         console.log("Origin --> :", origin);
         console.log("Environment --> :", environment);
 
-        const db = database.getDatabaseInstance(environment)
+        const db = database.getDatabaseInstance(environment);
 
         if (!userId || !ordersIds || !environment) throw new Error('Invalid parameters');
 
-        if (origin === 'apiGateway' && ordersIds.length > 5) {
+        if (origin === 'apiGateway' && ordersIds.length > 500) {
 
             const result = await model.sendEventData({
                 detailType: 'MANIFEST-DOWNLOAD',

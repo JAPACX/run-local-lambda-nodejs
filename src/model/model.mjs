@@ -16,7 +16,7 @@ const getOrdersData = async ({ordersIds: ordersIds, db: db}) => {
         console.error("Error:", error);
         throw error;
     }
-}
+};
 
 
 const resumeOrdersData = async ({ordersIds: ordersIds, db: db}) => {
@@ -26,7 +26,7 @@ const resumeOrdersData = async ({ordersIds: ordersIds, db: db}) => {
         console.error("Error:", error);
         throw error;
     }
-}
+};
 
 const sendEventData = async ({detailType, detail, source}) => {
     try {
@@ -45,7 +45,7 @@ const sendEventData = async ({detailType, detail, source}) => {
         console.error(err);
         throw err;
     }
-}
+};
 
 
 const resumeCarriers = async ({carriersData, pageWidth, pageHeight}) => {
@@ -85,7 +85,14 @@ const resumeCarriers = async ({carriersData, pageWidth, pageHeight}) => {
         }
 
         if (pdfLibsDocuments.length) {
-            pdfLibsDocuments.push(await pages.getConsolidatedProducts({width: pageWidth, height: pageHeight, resumedOrdersData: carriersData.resumedOrdersData, logoMastershop: logoResponses[0].data}));
+            const resumeDataProducts = await pages.getConsolidatedProducts({
+                width: pageWidth,
+                height: pageHeight,
+                resumedOrdersData: carriersData.resumedOrdersData,
+                logoMastershop: logoResponses[0].data
+            });
+
+            pdfLibsDocuments.push(resumeDataProducts);
             return await dto.mergedPdfLibDocument(pdfLibsDocuments);
         } else {
             throw new Error('No carrier data available');
@@ -94,7 +101,7 @@ const resumeCarriers = async ({carriersData, pageWidth, pageHeight}) => {
         console.error(` Error: ${error}`);
         throw error;
     }
-}
+};
 
 const addTrackingProofsToDocument = async ({ordersData, pageHeight, pageWidth}) => {
     try {
@@ -104,18 +111,19 @@ const addTrackingProofsToDocument = async ({ordersData, pageHeight, pageWidth}) 
             pageWidth
         });
 
-        const allShippingLabels = [
-            ...ordersData.COORDINADORA,
-            ...ordersData.ENVIA,
-            ...ordersData.TCC,
-            ...ordersData._99MINUTOS
-        ].filter(order => order.shippingLabel).map(order => order.shippingLabel);
-
-        const trackingProofsBase64 = await dao.arrayBase64FromUrls({pdfUrls: allShippingLabels});
+        // const allShippingLabels = [
+        //     ...ordersData.COORDINADORA,
+        //     ...ordersData.ENVIA,
+        //     ...ordersData.TCC,
+        //     ...ordersData._99MINUTOS
+        // ].filter(order => order.shippingLabel).map(order => order.shippingLabel);
+        //
+        // const trackingProofsBase64 = await dao.arrayBase64FromUrls({pdfUrls: allShippingLabels});
 
         return await dto.mergedBase64({
             originalPdf: mainPagesBase64,
-            pdfArrayBase64: trackingProofsBase64,
+            // pdfArrayBase64: trackingProofsBase64,
+            pdfArrayBase64: [],
             pageHeight,
             pageWidth
         });
@@ -123,7 +131,7 @@ const addTrackingProofsToDocument = async ({ordersData, pageHeight, pageWidth}) 
         console.error(error);
         throw error;
     }
-}
+};
 
 
 const uploadPdfToS3 = async ({pdfBase64, pdfFileName}) => {

@@ -41,7 +41,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
                 default:
                     return logoImages[0];
             }
-        }
+        };
 
         //--------------------- Consolidado de pedidos -------------------------
 
@@ -49,14 +49,14 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         page.drawRectangle({
             x: 170,
             y: 760,
-            width: 370,
+            width: 230,
             height: 30,
             color: rgb(0.8, 0.8, 0.8),
         });
 
         // Titulo
         mainPage.drawText(`Consolidado de Pedidos ${carrierName}`, {
-            x: 230,
+            x: 190,
             y: 770,
             size: fontSize + 2,
             font: boldFont,
@@ -83,15 +83,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
 
         page.drawText(`Numero de Guías: ${carrierData.length}`, {
             x: 280,
-            y: 735,
-            size: fontSize,
-            font: boldFont,
-            color: blackColor,
-        });
-
-        page.drawText(`Total a recaudar`, {
-            x: 410,
-            y: 735,
+            y: 740,
             size: fontSize,
             font: boldFont,
             color: blackColor,
@@ -116,100 +108,49 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         const time = currentDateTime.toLocaleTimeString('es-ES', optionsTime);
 
         // Date
-        page.drawText(`Fecha: ${date}`, {
+        page.drawText(`Fecha: ${date}, ${time.toUpperCase()}`, {
             x: 280,
-            y: 720,
+            y: 725,
             size: fontSize,
             font: boldFont,
             color: blackColor,
         });
-
-        // Time
-        page.drawText(`Hora: ${time}`, {
-            x: 280,
-            y: 705,
-            size: fontSize,
-            font: boldFont,
-            color: blackColor,
-        });
-
 
         //-----------------------------Firmas-------------------------------------
 
         // Firma funcionario
         page.drawText(`Firma funcionario: (${carrierName})`, {
-            x: 70,
-            y: 670,
+            x: 420,
+            y: 770,
             size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         page.drawText(`_______________________`, {
-            x: 70,
-            y: 645,
+            x: 420,
+            y: 745,
             size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
         page.drawText(`CC:`, {
-            x: 70,
-            y: 630,
-            size: fontSize,
-            font: boldFont,
-            color: blackColor,
-        });
-
-        // Firma Auxiliar
-        page.drawText(`Firma Auxiliar: (${carrierName})`, {
-            x: 250,
-            y: 670,
-            size: fontSize,
-            font: boldFont,
-            color: blackColor,
-        });
-
-        page.drawText(`_______________________`, {
-            x: 250,
-            y: 645,
-            size: fontSize,
-            font: boldFont,
-            color: blackColor,
-        });
-
-        page.drawText(`CC:`, {
-            x: 250,
-            y: 630,
-            size: fontSize,
-            font: boldFont,
-            color: blackColor,
-        });
-
-        // Firma Bodega
-        page.drawText(`Firma Bodega`, {
             x: 420,
-            y: 670,
+            y: 730,
             size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
-        page.drawText(`_______________________`, {
+        page.drawText(`Placa Vehículo:`, {
             x: 420,
-            y: 645,
+            y: 715,
             size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
-        page.drawText(`Placa vehiculo:`, {
-            x: 420,
-            y: 630,
-            size: fontSize,
-            font: boldFont,
-            color: blackColor,
-        });
 
 
         //------------------------------------------------------------------------
@@ -254,7 +195,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         startY -= 30; // Spaces between header and rows
 
         // Draw rows
-        let totalToCollect = 0
+        let totalToCollect = 0;
         carrierData.forEach((row, index) => {
             let rowHeight = 25;
 
@@ -339,10 +280,10 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
                 color: blackColor,
             });
 
-            let startYClient = startY
+            let startYClient = startY;
 
             // Ubicacion
-            startYClient -= 10
+            startYClient -= 10;
             currentPage.drawText(`${row.city}, ${row.state}`, {
                 x: columnPositions[6] + 5,
                 y: startYClient,
@@ -364,7 +305,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
 
             // Condicional para validar si se debe mostrar el valor de recaudo
             if (row.paymentMethod?.toLowerCase() === 'cod') {
-                totalToCollect += parseInt(row.totalSeller)
+                totalToCollect += parseInt(row.totalSeller, 10);
             }
 
             const products = row.products;
@@ -391,7 +332,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
                     });
                     remainingText = remainingText.substring(33).trim();
                     productTextY -= 15;
-                    rowHeight += 10;
+                    rowHeight += 15;
                 }
             });
 
@@ -404,17 +345,18 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
                 pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
             }
         });
-        // Total a recaudar Valor
-        page.drawText(`$${totalToCollect.toLocaleString()}`, {
-            x: 415,
-            y: 705,
-            size: fontSize + 5,
+
+        page.drawText(`Total a recaudar $${totalToCollect.toLocaleString()}`, {
+            x: 280,
+            y: 710,
+            size: fontSize,
             font: boldFont,
             color: blackColor,
         });
 
+
         // Documento sin guardar en algun formato
-        return pdfDoc
+        return pdfDoc;
 
     } catch (error) {
         console.error(error);
@@ -437,7 +379,7 @@ const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMa
         const A4_WIDTH = width;
         const A4_HEIGHT = height;
 
-        const mainLogo = await pdfDoc.embedPng(logoMastershop)
+        const mainLogo = await pdfDoc.embedPng(logoMastershop);
         const mainPage = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
         const fontSize = 7;
 
@@ -541,7 +483,7 @@ const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMa
             currentPage.drawText(`${row.sku && row.sku !== 'null' ? row.sku : '-'}`, {
                 x: columnPositions[0] + 5,
                 y: startY - 2,
-                size: rowFontSize + 3,
+                size: rowFontSize,
                 font: font,
                 color: blackColor,
             });
@@ -549,7 +491,7 @@ const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMa
             currentPage.drawText(`${row.idProduct}`, {
                 x: columnPositions[1] + 5,
                 y: startY - 2,
-                size: rowFontSize + 3,
+                size: rowFontSize,
                 font: font,
                 color: blackColor,
             });
@@ -557,7 +499,7 @@ const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMa
             currentPage.drawText(`${row.totalQuantity}`, {
                 x: columnPositions[3] + 20,
                 y: startY - 2,
-                size: rowFontSize + 3,
+                size: rowFontSize,
                 font: font,
                 color: blackColor,
             });
@@ -587,7 +529,7 @@ const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMa
                 pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
             }
         });
-        return pdfDoc
+        return pdfDoc;
 
     } catch (error) {
         console.error(error);
@@ -596,4 +538,4 @@ const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMa
 };
 
 
-export default {getConsolidatedProducts, getMainPageByCarrierInBase64}
+export default {getConsolidatedProducts, getMainPageByCarrierInBase64};
