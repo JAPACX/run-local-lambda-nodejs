@@ -28,8 +28,19 @@ export const handler = async (event, context) => {
             );
             console.log(result);
         } else if (result.isValid && idOrder && attachments.length ) {
-            const resultUploadAttachments = await model.uploadAttachments(attachments);
-            console.log("put info to dynamo  with attachments links");
+            const resultUploadAttachments = await model.uploadAttachments({attachments});
+            const result = await model.putItemToDynamoDB({
+                    idOrder: idOrder.idOrder,
+                    idMessage: context.logStreamName,
+                    originResponse: 'carrier',
+                    date: new Date().toISOString(),
+                    subject: subject,
+                    message: text,
+                    bodyHtml: html,
+                    signedUrls: resultUploadAttachments
+                }
+            );
+            console.log(result);
         } else {
             console.log("send alert to check template");
         }

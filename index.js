@@ -35,14 +35,14 @@ const event = {
             configurationId: 'd34944fd-cf50-4f2f-8429-5672c3fa8a78',
             bucket: {
                 name: 'mastershop-notification-ses',
-                ownerIdentity: { principalId: 'A2K5XNS0LU5I23' },
+                ownerIdentity: {principalId: 'A2K5XNS0LU5I23'},
                 arn: 'arn:aws:s3:::mastershop-notification-ses'
             },
             object: {
-                key: 'mailsFromCarriers/tcc/uvd68jufi73bhriho20i3t5e6b9nvvdrhii3c201',
-                size: 401361,
-                eTag: 'd33c59538c1b45664a5964aac1902451',
-                sequencer: '006669DE8225C19BD8'
+                key: 'mailsFromCarriers/tcc/m19dj1tg7jtu1rdciubhvp8qihqtim5t8jn7ogg1',
+                size: 19014531,
+                eTag: '65334eb6df4b28f89d132fc65d4d283e',
+                sequencer: '00666A07EEBC0284D5'
             }
         }
     }]

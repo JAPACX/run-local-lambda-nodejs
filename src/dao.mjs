@@ -1,11 +1,12 @@
-import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient, PutCommand} from '@aws-sdk/lib-dynamodb';
 import db from "./database/config.mjs";
-import fs from "fs/promises";
+
+const s3Client = new S3Client({region: 'us-east-1'});
 
 const getS3File = async (event) => {
-    const s3Client = new S3Client({region: 'us-east-1'});
     const s3Event = event.Records[0];
     const bucketName = s3Event.s3.bucket.name;
     const objectKey = decodeURIComponent(s3Event.s3.object.key.replace(/\+/g, ' '));
@@ -55,25 +56,43 @@ const putItemToDynamoDB = async (data) => {
     }
 }
 
-const  uploadAttachments = async ({attachments}) => {
+const uploadAttachments = async ({attachments}) => {
+    const urls = [];
+
     for (let attachment of attachments) {
         if (attachment.content && attachment.filename && attachment.contentType) {
             const buffer = Buffer.from(attachment.content);
-            const filename = attachment.filename;
+            const filename = `mailsFromCarriers/tcc/attachments/${attachment.filename}`;
+            const params = {
+                Bucket: 'mastershop-notification-ses',
+                Key: filename,
+                Body: buffer,
+                ContentType: attachment.contentType
+            };
+
             try {
-                await fs.writeFile(filename, buffer);
-                console.log(`File saved successfully: ${filename}`);
+                const putCommand = new PutObjectCommand(params);
+                await s3Client.send(putCommand);
+
+                const getCommand = new GetObjectCommand({
+                    Bucket: params.Bucket,
+                    Key: params.Key
+                });
+
+                // Genera la URL firmada 7 dias de expiración
+                const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 604800 });
+                urls.push(url);
+                console.log(`File uploaded and signed URL generated successfully: ${filename}`);
             } catch (err) {
-                console.error(`Error writing file ${filename}:`, err);
+                console.error(`Error uploading file ${filename}:`, err);
             }
         } else {
             console.log('Invalid attachment data, skipping...');
-            console.log('Attachment content exists:', attachment.content != null);
-            console.log('Attachment filename:', attachment.filename);
-            console.log('Attachment contentType:', attachment.contentType);
         }
     }
-}
+    return urls;
+};
+
 
 
 export default {getS3File, getOrderData, putItemToDynamoDB, uploadAttachments};
