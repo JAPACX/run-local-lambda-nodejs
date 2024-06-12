@@ -37,7 +37,7 @@ export const handler = async (event, context) => {
                     subject: subject,
                     message: text,
                     bodyHtml: html,
-                    signedUrls: resultUploadAttachments
+                    urlsLocation: resultUploadAttachments
                 }
             );
             console.log(result);

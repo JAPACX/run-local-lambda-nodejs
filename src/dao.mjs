@@ -1,5 +1,5 @@
 import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient, PutCommand} from '@aws-sdk/lib-dynamodb';
 import db from "./database/config.mjs";
@@ -55,7 +55,39 @@ const putItemToDynamoDB = async (data) => {
         throw error;
     }
 }
+// validacion con url
+// const uploadAttachments = async ({attachments}) => {
+//     const urls = [];
+//
+//     for (let attachment of attachments) {
+//         if (attachment.content && attachment.filename && attachment.contentType) {
+//             const buffer = Buffer.from(attachment.content);
+//             const filename = `mailsFromCarriers/tcc/attachments/${attachment.filename}`;
+//             const params = {
+//                 Bucket: 'mastershop-notification-ses',
+//                 Key: filename,
+//                 Body: buffer,
+//                 ContentType: attachment.contentType
+//             };
+//
+//             try {
+//                 const putCommand = new PutObjectCommand(params);
+//                 await s3Client.send(putCommand);
+//
+//                 const url = `https://${params.Bucket}.s3.amazonaws.com/${encodeURIComponent(params.Key)}`;
+//                 urls.push(url);
+//                 console.log(`File uploaded successfully: ${filename}`);
+//             } catch (err) {
+//                 console.error(`Error uploading file ${filename}:`, err);
+//             }
+//         } else {
+//             console.log('Invalid attachment data, skipping...');
+//         }
+//     }
+//     return urls;
+// };
 
+// obtener firmas url
 const uploadAttachments = async ({attachments}) => {
     const urls = [];
 
@@ -80,7 +112,7 @@ const uploadAttachments = async ({attachments}) => {
                 });
 
                 // Genera la URL firmada 7 dias de expiración
-                const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 604800 });
+                const url = await getSignedUrl(s3Client, getCommand, {expiresIn: 604800});
                 urls.push(url);
                 console.log(`File uploaded and signed URL generated successfully: ${filename}`);
             } catch (err) {
@@ -92,7 +124,6 @@ const uploadAttachments = async ({attachments}) => {
     }
     return urls;
 };
-
 
 
 export default {getS3File, getOrderData, putItemToDynamoDB, uploadAttachments};
