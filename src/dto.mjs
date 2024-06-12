@@ -1,35 +1,28 @@
-const findMatches = (ordersIncidentsEvent, ordersIncidentsAccountTcc) => {
-    const matches = {};
+import {simpleParser} from "mailparser";
 
-    ordersIncidentsEvent.forEach(event => {
-        const guideId = event.guideId;
 
-        const matchingAccounts = ordersIncidentsAccountTcc.filter(account => account.numeroremesa === guideId);
+const streamToString = (stream) => new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("error", reject);
+    stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+});
 
-        if (matchingAccounts.length > 0) {
-            const latestAccount = matchingAccounts.reduce((latest, current) => {
-                const latestDate = new Date(latest.fechaplanteanovedad);
-                const currentDate = new Date(current.fechaplanteanovedad);
-                return latestDate > currentDate ? latest : current;
-            });
-
-            matches[guideId] = {
-                guideId: guideId,
-                idnovedad: latestAccount.idnovedad,
-                data: latestAccount,
-                idOrder: event.idOrder,
-                idCarrierStatusUpdate: event.idCarrierStatusUpdate
-            };
-        }
-    });
-
-    const result = [];
-
-    for (const key in matches) {
-        result.push(matches[key]);
+const parseEmail = async (rawEmail) => {
+    try {
+        const { subject, from, to, text, html, attachments } = await simpleParser(rawEmail);
+        return {
+            subject,
+            from: from.text,
+            to: to.text,
+            text,
+            html,
+            attachments
+        };
+    } catch (error) {
+        console.error('Error parsing email:', error);
     }
-
-    return result;
 }
 
-export default  {findMatches}
+
+export default  {parseEmail, streamToString}
