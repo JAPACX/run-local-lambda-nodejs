@@ -65,7 +65,7 @@ const uploadAttachments = async ({attachments}) => {
     for (let attachment of attachments) {
         if (attachment.content && attachment.filename && attachment.contentType) {
             const buffer = Buffer.from(attachment.content);
-            const filename = `mastershop/mailsFromCarriers/tcc/attachments/${attachment.filename}`;
+            const filename = `mastershop/mailsFromCarriers/tcc/attachments/${uuidv4()+attachment.filename}`;
             const params = {
                 Bucket: 'bemaster-res',
                 Key: filename,
