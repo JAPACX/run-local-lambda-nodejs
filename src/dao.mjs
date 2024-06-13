@@ -1,12 +1,12 @@
 import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
-import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
+import { v4 as uuidv4 } from 'uuid';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient, PutCommand} from '@aws-sdk/lib-dynamodb';
 import db from "./database/config.mjs";
 
-const s3Client = new S3Client({region: 'us-east-1'});
 
 const getS3File = async (event) => {
+    const s3Client = new S3Client({region: 'us-east-1'});
     const s3Event = event.Records[0];
     const bucketName = s3Event.s3.bucket.name;
     const objectKey = decodeURIComponent(s3Event.s3.object.key.replace(/\+/g, ' '));
@@ -55,48 +55,19 @@ const putItemToDynamoDB = async (data) => {
         throw error;
     }
 }
-// validacion con url
-// const uploadAttachments = async ({attachments}) => {
-//     const urls = [];
-//
-//     for (let attachment of attachments) {
-//         if (attachment.content && attachment.filename && attachment.contentType) {
-//             const buffer = Buffer.from(attachment.content);
-//             const filename = `mailsFromCarriers/tcc/attachments/${attachment.filename}`;
-//             const params = {
-//                 Bucket: 'mastershop-notification-ses',
-//                 Key: filename,
-//                 Body: buffer,
-//                 ContentType: attachment.contentType
-//             };
-//
-//             try {
-//                 const putCommand = new PutObjectCommand(params);
-//                 await s3Client.send(putCommand);
-//
-//                 const url = `https://${params.Bucket}.s3.amazonaws.com/${encodeURIComponent(params.Key)}`;
-//                 urls.push(url);
-//                 console.log(`File uploaded successfully: ${filename}`);
-//             } catch (err) {
-//                 console.error(`Error uploading file ${filename}:`, err);
-//             }
-//         } else {
-//             console.log('Invalid attachment data, skipping...');
-//         }
-//     }
-//     return urls;
-// };
 
-// obtener firmas url
+
 const uploadAttachments = async ({attachments}) => {
+    const s3Client = new S3Client({region: 'us-east-2'});
+
     const urls = [];
 
     for (let attachment of attachments) {
         if (attachment.content && attachment.filename && attachment.contentType) {
             const buffer = Buffer.from(attachment.content);
-            const filename = `mailsFromCarriers/tcc/attachments/${attachment.filename}`;
+            const filename = `mastershop/mailsFromCarriers/tcc/attachments/${attachment.filename}`;
             const params = {
-                Bucket: 'mastershop-notification-ses',
+                Bucket: 'bemaster-res',
                 Key: filename,
                 Body: buffer,
                 ContentType: attachment.contentType
@@ -106,15 +77,9 @@ const uploadAttachments = async ({attachments}) => {
                 const putCommand = new PutObjectCommand(params);
                 await s3Client.send(putCommand);
 
-                const getCommand = new GetObjectCommand({
-                    Bucket: params.Bucket,
-                    Key: params.Key
-                });
-
-                // Genera la URL firmada 7 dias de expiración
-                const url = await getSignedUrl(s3Client, getCommand, {expiresIn: 604800});
+                const url = `https://cdn.bemaster.com/${encodeURIComponent(params.Key)}`;
                 urls.push(url);
-                console.log(`File uploaded and signed URL generated successfully: ${filename}`);
+                console.log(`File uploaded successfully: ${filename}`);
             } catch (err) {
                 console.error(`Error uploading file ${filename}:`, err);
             }
@@ -125,5 +90,30 @@ const uploadAttachments = async ({attachments}) => {
     return urls;
 };
 
+const uploadHtmlToS3 = async ({htmlContent}) => {
+    const s3Client = new S3Client({ region: 'us-east-2' });
 
-export default {getS3File, getOrderData, putItemToDynamoDB, uploadAttachments};
+    const filename = `mastershop/mailsFromCarriers/tcc/${uuidv4()}.html`;
+
+    const buffer = Buffer.from(htmlContent, 'utf-8');
+    const params = {
+        Bucket: 'bemaster-res',
+        Key: filename,
+        Body: buffer,
+        ContentType: 'text/html'
+    };
+
+    try {
+        const putCommand = new PutObjectCommand(params);
+        await s3Client.send(putCommand);
+
+        const url = `https://cdn.bemaster.com/${encodeURIComponent(params.Key)}`;
+        console.log(`HTML file uploaded successfully: ${filename}`);
+        return url;
+    } catch (err) {
+        console.error(`Error uploading HTML file:`, err);
+        return null;
+    }
+};
+
+export default {getS3File, getOrderData, putItemToDynamoDB, uploadAttachments, uploadHtmlToS3};

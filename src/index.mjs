@@ -15,19 +15,19 @@ export const handler = async (event, context) => {
         if (result.shipmentCode) [idOrder] = await model.getOrderData({carrierTrackingCode: result.shipmentCode});
 
         if (result.isValid  && idOrder && !attachments.length ) {
-            console.log("put info to dynamo");
+            const resultUploadHtml = await model.uploadHtmlToS3({htmlContent: html});
             const result = await model.putItemToDynamoDB({
                     idOrder: idOrder.idOrder,
                     idMessage: context.logStreamName,
                     originResponse: 'carrier',
                     date: new Date().toISOString(),
                     subject: subject,
-                    message: text,
-                    bodyHtml: html
+                    bodyHtml: resultUploadHtml
                 }
             );
             console.log(result);
         } else if (result.isValid && idOrder && attachments.length ) {
+            const resultUploadHtml = await model.uploadHtmlToS3({htmlContent: html});
             const resultUploadAttachments = await model.uploadAttachments({attachments});
             const result = await model.putItemToDynamoDB({
                     idOrder: idOrder.idOrder,
@@ -35,8 +35,7 @@ export const handler = async (event, context) => {
                     originResponse: 'carrier',
                     date: new Date().toISOString(),
                     subject: subject,
-                    message: text,
-                    bodyHtml: html,
+                    bodyHtml: resultUploadHtml,
                     urlsLocation: resultUploadAttachments
                 }
             );

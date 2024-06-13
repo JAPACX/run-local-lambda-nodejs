@@ -39,9 +39,18 @@ const uploadAttachments = async ({attachments}) => {
     }
 }
 
+const uploadHtmlToS3 = async ({htmlContent}) => {
+    try {
+        return dao.uploadHtmlToS3({htmlContent});
+    } catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+}
 
 
-export default {getParsedEmail, getOrderData, putItemToDynamoDB, uploadAttachments};
+
+export default {getParsedEmail, getOrderData, putItemToDynamoDB, uploadAttachments, uploadHtmlToS3};
 
 
 

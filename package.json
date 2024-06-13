@@ -23,7 +23,8 @@
     "express": "^4.19.2",
     "mailparser": "^3.7.1",
     "mysql2": "^3.9.2",
-    "sequelize": "^6.37.1"
+    "sequelize": "^6.37.1",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "archiver": "^7.0.1",
