@@ -12,9 +12,9 @@ const getParsedEmail = async (event) => {
     }
 }
 
-const getOrderData = async () => {
+const getOrderData = async ({carrierTrackingCode}) => {
     try {
-        return dao.getOrderData({carrierTrackingCode:609396334});
+        return dao.getOrderData({carrierTrackingCode});
     } catch (error) {
         console.error('Error:', error);
         throw error;
@@ -48,9 +48,24 @@ const uploadHtmlToS3 = async ({htmlContent}) => {
     }
 }
 
+const getIdMessageIdentifier = async ({idOrder}) => {
+    try {
+        return await dao.getIdMessageIdentifier({idOrder});
+    } catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+}
 
 
-export default {getParsedEmail, getOrderData, putItemToDynamoDB, uploadAttachments, uploadHtmlToS3};
+export default {
+    getParsedEmail,
+    getOrderData,
+    putItemToDynamoDB,
+    uploadAttachments,
+    uploadHtmlToS3,
+    getIdMessageIdentifier
+};
 
 
 

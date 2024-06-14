@@ -1,5 +1,5 @@
 import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient, PutCommand} from '@aws-sdk/lib-dynamodb';
 import db from "./database/config.mjs";
@@ -65,7 +65,7 @@ const uploadAttachments = async ({attachments}) => {
     for (let attachment of attachments) {
         if (attachment.content && attachment.filename && attachment.contentType) {
             const buffer = Buffer.from(attachment.content);
-            const filename = `mastershop/mailsFromCarriers/tcc/attachments/${uuidv4()+attachment.filename}`;
+            const filename = `mastershop/mailsFromCarriers/coordinadora/attachments/${uuidv4() + attachment.filename}`;
             const params = {
                 Bucket: 'bemaster-res',
                 Key: filename,
@@ -91,9 +91,9 @@ const uploadAttachments = async ({attachments}) => {
 };
 
 const uploadHtmlToS3 = async ({htmlContent}) => {
-    const s3Client = new S3Client({ region: 'us-east-2' });
+    const s3Client = new S3Client({region: 'us-east-2'});
 
-    const filename = `mastershop/mailsFromCarriers/tcc/${uuidv4()}.html`;
+    const filename = `mastershop/mailsFromCarriers/coordinadora/${uuidv4()}.html`;
 
     const buffer = Buffer.from(htmlContent, 'utf-8');
     const params = {
@@ -116,4 +116,29 @@ const uploadHtmlToS3 = async ({htmlContent}) => {
     }
 };
 
-export default {getS3File, getOrderData, putItemToDynamoDB, uploadAttachments, uploadHtmlToS3};
+
+const getIdMessageIdentifier = async ({ idOrder }) => {
+    try {
+        let query = `SELECT idOrderShipmentUpdate FROM orderShipmentUpdateHistory WHERE status = 'WAITING-RESPONSE' AND idOrder = ${idOrder};`;
+        let result = await db.query(query, {
+            type: db.QueryTypes.SELECT
+        });
+
+        if (result.length === 0) {
+            query = `SELECT idCarrierRequirement FROM carrierRequirement WHERE idOrder = ${idOrder};`;
+            result = await db.query(query, {
+                type: db.QueryTypes.SELECT
+            });
+        }
+
+        return result.length > 0 ? result[0] : null;
+
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+        throw error;
+    }
+};
+
+
+
+export default {getS3File, getOrderData, putItemToDynamoDB, uploadAttachments, uploadHtmlToS3, getIdMessageIdentifier};

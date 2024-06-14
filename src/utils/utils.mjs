@@ -1,7 +1,7 @@
 import t from "./templates.mjs";
 
 const extractShipmentCode = (subject, text) => {
-    const regex = /\b\d{9}\b/g;
+    const regex = /\b4\d{10}\b/g;
     const subjectMatch = subject.match(regex);
     const textMatch = text.match(regex);
 
@@ -25,11 +25,9 @@ const normalizeText = (text) => {
 const validateEmailContent = (subject, text) => {
     let result = { isValid: false, code: null, shipmentCode: null };
     const normalizedSubject = normalizeText(subject);
-    const normalizedText = normalizeText(text);
 
     for (const template of t.templates) {
-        if (template.subjectKeywords.every(keyword => normalizedSubject.includes(normalizeText(keyword))) &&
-            template.textKeywords.every(keyword => normalizedText.includes(normalizeText(keyword)))) {
+        if (template.subjectKeywords.every(keyword => normalizedSubject.includes(normalizeText(keyword)))) {
             result.isValid = true;
             result.code = template.code;
             result.shipmentCode = extractShipmentCode(subject, text);

@@ -32,17 +32,17 @@ const event = {
         responseElements: [Object],
         s3: {
             s3SchemaVersion: '1.0',
-            configurationId: 'd34944fd-cf50-4f2f-8429-5672c3fa8a78',
+            configurationId: '856fff92-b478-4e50-8572-e68b63ec7064',
             bucket: {
                 name: 'mastershop-notification-ses',
-                ownerIdentity: {principalId: 'A2K5XNS0LU5I23'},
+                ownerIdentity: { principalId: 'A2K5XNS0LU5I23' },
                 arn: 'arn:aws:s3:::mastershop-notification-ses'
             },
             object: {
-                key: 'mailsFromCarriers/tcc/m19dj1tg7jtu1rdciubhvp8qihqtim5t8jn7ogg1',
-                size: 19014531,
-                eTag: '65334eb6df4b28f89d132fc65d4d283e',
-                sequencer: '00666A07EEBC0284D5'
+                key: 'mailsFromCarriers/tcc/k4dshbq6g9d6agidut2r2dgu57469spdm38k6v81',
+                size: 4642,
+                eTag: 'd2cb31591b7e2b0721ace54d35dd2d14',
+                sequencer: '00666C90C8C095B284'
             }
         }
     }]
