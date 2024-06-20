@@ -95,7 +95,7 @@ const apiGatewayEvent = {
         VerifyParam: 'mastershop-prod-apigateway-to-lb-verify-19911210',
         VerifyParamLogistics: 'mastershop-logistics-prod-apigateway-to-lb-verify-19911210'
     },
-    body: '{"ordersIds":["2656","2654","2656","2654","2653","2642","2640","2639","2637"]}',
+    body: '{"ordersIds":["2656","5109", "5112", "5113"]}',
     isBase64Encoded: false
 }
 

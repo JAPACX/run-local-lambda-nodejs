@@ -2,7 +2,13 @@ import {PDFDocument, rgb, StandardFonts} from "pdf-lib";
 import utils from "../utils.mjs";
 
 
-const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, height, logoResponses}) => {
+const getMainPageByCarrierInBase64 = async ({
+                                                carrierData,
+                                                carrierName,
+                                                width: A4_WIDTH,
+                                                height: A4_HEIGHT,
+                                                logoResponses
+                                            }) => {
     try {
         const pdfDoc = await PDFDocument.create();
         let initPage = 0;
@@ -13,9 +19,6 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
 
         const blackColor = rgb(0, 0, 0);
         const grayColor = rgb(0.8, 0.8, 0.8);
-
-        const A4_WIDTH = width;
-        const A4_HEIGHT = height;
 
         const logoImages = await Promise.all(
             logoResponses.map(async (response) => {
@@ -38,6 +41,8 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
                     return logoImages[3];
                 case 'TCC':
                     return logoImages[4];
+                case 'DOMINA':
+                    return logoImages[5];
                 default:
                     return logoImages[0];
             }
@@ -119,7 +124,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         //-----------------------------Firmas-------------------------------------
 
         // Firma funcionario
-        page.drawText(`Firma funcionario: (${carrierName})`, {
+        page.drawText(`Firma funcionario:`, {
             x: 420,
             y: 770,
             size: fontSize,
@@ -152,35 +157,32 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         });
 
 
-
         //------------------------------------------------------------------------
 
 
         //  Fondo de columnas N guia, Pedido, Productos....
         page.drawRectangle({
             x: 45,
-            y: 580,
+            y: 650,
             width: 500,
             height: 30,
             color: rgb(0.8, 0.8, 0.8),
         });
 
         // Columnas de hoja
-        let startY = 590;
+        let startY = 660;
         const headerFontSize = 9;
         const rowFontSize = 7;
-        const lineHeight = 25;
+        const lineHeight = 32;
 
         const headers = [
             '#',
-            'N° Guía',
-            'N° Pedido',
-            'Nombre del producto',
-            'Und',
-            'Recaudo',
-            'Cliente',
+            'Envio',
+            'Productos',
+            'Destinatario',
+            'Recaudo'
         ];
-        const columnPositions = [50, 70, 130, 190, 330, 360, 410];
+        const columnPositions = [50, 70, 130, 350, 490];
 
         // Headers
         headers.forEach((header, index) => {
@@ -197,7 +199,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
         // Draw rows
         let totalToCollect = 0;
         carrierData.forEach((row, index) => {
-            let rowHeight = 25;
+            let rowHeight = 0;
 
             const currentPage = pdfDoc.getPage(initPage);
 
@@ -231,7 +233,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             });
 
             // Tarifa de envio Texto
-            currentPage.drawText(`Valor envio:`, {
+            currentPage.drawText(`Pedido: ${row.order}`, {
                 x: columnPositions[1] + 5,
                 y: startY - 10,
                 size: rowFontSize,
@@ -239,24 +241,6 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
                 color: blackColor,
             });
 
-            // Tarifa de envio
-            currentPage.drawText(`$${row.shippingRate.toLocaleString()}`, {
-                x: columnPositions[2] + 5,
-                y: startY - 10,
-                size: rowFontSize,
-                font: font,
-                color: blackColor,
-            });
-
-
-            // N° Pedido
-            currentPage.drawText(`${row.order}`, {
-                x: columnPositions[2] + 5,
-                y: startY,
-                size: rowFontSize,
-                font: font,
-                color: blackColor,
-            });
 
             //------------------------ Cliente ---------------------------------
 
@@ -273,7 +257,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             }
 
             currentPage.drawText(`${firstName} ${lastName}, Tel: ${row.phone}`, {
-                x: columnPositions[6] + 5,
+                x: columnPositions[3] + 5,
                 y: startY,
                 size: rowFontSize,
                 font: font,
@@ -285,7 +269,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             // Ubicacion
             startYClient -= 10;
             currentPage.drawText(`${row.city}, ${row.state}`, {
-                x: columnPositions[6] + 5,
+                x: columnPositions[3] + 5,
                 y: startYClient,
                 size: rowFontSize,
                 font: font,
@@ -296,7 +280,7 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
 
             // Recaudo Texto
             currentPage.drawText(`${row.paymentMethod?.toLowerCase() === 'cod' ? row.totalSeller.toLocaleString() : 'NO'}`, {
-                x: columnPositions[5] + 5,
+                x: columnPositions[4] + 10,
                 y: startY,
                 size: rowFontSize,
                 font: font,
@@ -311,33 +295,24 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             const products = row.products;
             let productTextY = startY;
             products.forEach(({name, quantity}) => {
-                let remainingText = utils.cleanText(name);
-
-                currentPage.drawText(`(${quantity})`, {
-                    x: columnPositions[4] + 5,
-                    y: productTextY,
-                    size: rowFontSize,
-                    font: font,
-                    color: blackColor,
-                });
+                let remainingText = utils.cleanText(`${name} X (${quantity} Und)`);
 
                 while (remainingText.length > 0) {
-                    const truncatedProduct = remainingText.substring(0, 33);
+                    const truncatedProduct = remainingText.substring(0, 60);
                     currentPage.drawText(truncatedProduct, {
-                        x: columnPositions[3] + 5,
+                        x: columnPositions[2] + 5,
                         y: productTextY,
                         size: rowFontSize,
                         font: font,
                         color: blackColor,
                     });
-                    remainingText = remainingText.substring(33).trim();
-                    productTextY -= 15;
-                    rowHeight += 15;
+                    remainingText = remainingText.substring(60).trim();
+                    productTextY -= 10;
+                    rowHeight += 14;
                 }
             });
 
-            rowHeight = Math.max(rowHeight, lineHeight);
-            startY -= rowHeight;
+            startY -= Math.max(rowHeight, lineHeight);
 
             if (startY < 80) {
                 startY = 750;
@@ -354,17 +329,14 @@ const getMainPageByCarrierInBase64 = async ({carrierData, carrierName, width, he
             color: blackColor,
         });
 
-
-        // Documento sin guardar en algun formato
         return pdfDoc;
-
     } catch (error) {
         console.error(error);
         throw error;
     }
 };
 
-const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMastershop}) => {
+const getConsolidatedProducts = async ({width: A4_WIDTH, height: A4_HEIGHT, resumedOrdersData, logoMastershop}) => {
     try {
         const pdfDoc = await PDFDocument.create();
         let initPage = 0;
@@ -376,8 +348,6 @@ const getConsolidatedProducts = async ({width, height, resumedOrdersData, logoMa
         const blackColor = rgb(0, 0, 0);
         const grayColor = rgb(0.8, 0.8, 0.8);
 
-        const A4_WIDTH = width;
-        const A4_HEIGHT = height;
 
         const mainLogo = await pdfDoc.embedPng(logoMastershop);
         const mainPage = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);

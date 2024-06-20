@@ -1,4 +1,5 @@
 import axios from "axios";
+import https from 'https';
 
 const getOrdersData = async ({ordersIds, db}) => {
     try {
@@ -88,7 +89,11 @@ const arrayBase64FromUrls = async ({pdfUrls}) => {
         let retries = 0;
 
         const fetchPdf = () => {
-            return axios.get(url, {responseType: 'arraybuffer', timeout: 600000})
+            return axios.get(url, {
+                responseType: 'arraybuffer', timeout: 600000, httpsAgent: new https.Agent({
+                    rejectUnauthorized: false
+                })
+            })
                 .then(response => Buffer.from(response.data).toString('base64'))
                 .catch(error => {
                     if (retries < retryCount) {

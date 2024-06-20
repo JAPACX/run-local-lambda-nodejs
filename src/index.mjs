@@ -2,6 +2,10 @@ import model from "./model/model.mjs";
 import utils from "./utils.mjs";
 import database from "./database/config.mjs";
 
+function hasValidOrders(ordersData) {
+    const carriers = ['ENVIA', 'COORDINADORA', 'TCC', '_99MINUTOS', 'DOMINA'];
+    return carriers.every(carrier => ordersData[carrier]?.length === 0);
+}
 
 export const handler = async (event, context) => {
     try {
@@ -16,7 +20,22 @@ export const handler = async (event, context) => {
 
         if (!userId || !ordersIds || !environment) throw new Error('Invalid parameters');
 
-        if (origin === 'apiGateway' && ordersIds.length > 500) {
+        const A4_WIDTH = 595.28;
+        const A4_HEIGHT = 841.89;
+        const ordersData = await model.getOrdersData({ordersIds: ordersIds, db: db});
+        const resumedOrdersData = await model.resumeOrdersData({ordersIds: ordersIds, db: db});
+
+
+        if (!ordersData || hasValidOrders(ordersData)) {
+            return {
+                statusCode: 404,
+                body: JSON.stringify({
+                    message: "No data found for this orders id's",
+                }),
+            };
+        }
+
+        if (origin === 'apiGateway' && (ordersIds.length > 5 || ordersData.DOMINA.length > 1)) {
 
             const result = await model.sendEventData({
                 detailType: 'MANIFEST-DOWNLOAD',
@@ -30,19 +49,6 @@ export const handler = async (event, context) => {
                 statusCode: 202,
                 body: JSON.stringify({
                     message: "Manifest is being generated",
-                }),
-            };
-        }
-        const A4_WIDTH = 595.28;
-        const A4_HEIGHT = 841.89;
-        const ordersData = await model.getOrdersData({ordersIds: ordersIds, db: db});
-        const resumedOrdersData = await model.resumeOrdersData({ordersIds: ordersIds, db: db});
-
-        if (!ordersData || ordersData.ENVIA.length === 0 && ordersData.COORDINADORA.length === 0 && ordersData.TCC.length === 0 && ordersData._99MINUTOS.length === 0) {
-            return {
-                statusCode: 404,
-                body: JSON.stringify({
-                    message: "No data found for this orders id's",
                 }),
             };
         }
@@ -87,3 +93,4 @@ export const handler = async (event, context) => {
         };
     }
 };
+

@@ -2,11 +2,18 @@ import {PDFDocument} from 'pdf-lib';
 
 
 const groupOrderDataByCarrier = ({ordersData}) => {
+    const COORDINADORA_ID = 6;
+    const TCC_ID = 4;
+    const MINUTOS_99_ID = 2;
+    const DOMINA_ID = 5;
+    const ENVIA_ID = 7;
+
     const parsedData = {
         COORDINADORA: [],
         ENVIA: [],
         TCC: [],
         _99MINUTOS: [],
+        DOMINA:[]
     };
 
     ordersData.forEach(order => {
@@ -45,16 +52,19 @@ const groupOrderDataByCarrier = ({ordersData}) => {
         };
 
         switch (idCarrier) {
-            case 6:
+            case COORDINADORA_ID:
                 parsedData.COORDINADORA.push(orderData);
                 break;
-            case 4:
+            case TCC_ID:
                 parsedData.TCC.push(orderData);
                 break;
-            case 2:
+            case MINUTOS_99_ID:
                 parsedData._99MINUTOS.push(orderData);
                 break;
-            case 7:
+            case DOMINA_ID:
+                parsedData.DOMINA.push(orderData);
+                break;
+            case ENVIA_ID:
                 parsedData.ENVIA.push(orderData);
                 break;
             default:

@@ -3,7 +3,7 @@ import {jwtDecode} from "jwt-decode";
 const cleanText = (text) => {
     text = String(text);
 
-    const allowedChars = /[a-zA-Z0-9\-_"'\.\s]/g;
+    const allowedChars = /[a-zA-Z0-9\-_()"'\.\s]/g;
 
     const result = text.match(allowedChars);
     return result ? result.join('') : '';

@@ -59,6 +59,7 @@ const resumeCarriers = async ({carriersData, pageWidth, pageHeight}) => {
             'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/99_minutos.png',
             'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/envia.png',
             'https://cdn.bemaster.com/mastershop/media/images/logos/logos_manifiesto/tcc.png',
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlkFu0C6ehZj-B_ldhIpcNLfygqfXV4NOZfA&s'
         ];
 
         const logoPromises = logoUrls.map((url) => axios.get(url, {responseType: 'arraybuffer'}));
@@ -68,7 +69,8 @@ const resumeCarriers = async ({carriersData, pageWidth, pageHeight}) => {
             {data: carriersData.TCC, name: 'TCC'},
             {data: carriersData.COORDINADORA, name: 'COORDINADORA'},
             {data: carriersData.ENVIA, name: 'ENVIA'},
-            {data: carriersData._99MINUTOS, name: '99MINUTOS'}
+            {data: carriersData._99MINUTOS, name: '99MINUTOS'},
+            {data: carriersData.DOMINA, name: 'DOMINA'}
         ];
 
         for (const carrier of carriers) {
@@ -111,19 +113,19 @@ const addTrackingProofsToDocument = async ({ordersData, pageHeight, pageWidth}) 
             pageWidth
         });
 
-        // const allShippingLabels = [
-        //     ...ordersData.COORDINADORA,
-        //     ...ordersData.ENVIA,
-        //     ...ordersData.TCC,
-        //     ...ordersData._99MINUTOS
-        // ].filter(order => order.shippingLabel).map(order => order.shippingLabel);
-        //
-        // const trackingProofsBase64 = await dao.arrayBase64FromUrls({pdfUrls: allShippingLabels});
+        const allShippingLabels = [
+            ...ordersData.COORDINADORA,
+            ...ordersData.ENVIA,
+            ...ordersData.TCC,
+            ...ordersData._99MINUTOS,
+            ...ordersData.DOMINA
+        ].filter(order => order.shippingLabel).map(order => order.shippingLabel);
+
+        const trackingProofsBase64 = await dao.arrayBase64FromUrls({pdfUrls: allShippingLabels});
 
         return await dto.mergedBase64({
             originalPdf: mainPagesBase64,
-            // pdfArrayBase64: trackingProofsBase64,
-            pdfArrayBase64: [],
+            pdfArrayBase64: trackingProofsBase64,
             pageHeight,
             pageWidth
         });
